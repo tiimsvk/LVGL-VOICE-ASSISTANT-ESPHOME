@@ -1,0 +1,4182 @@
+#-------------------------------------------
+# BUG AND REPAIR AND PLANNED
+#-------------------------------------------
+# radar https://api.weather.com/v2/maps/dynamic?geocode=48.15,17.30&h=400&w=400&lod=8&apiKey=e1f10a1e78da46f5b10a1e78da96f525&product=twcRadarMosaic,648
+#-------------------------------------------
+# REVISION
+#-------------------------------------------
+# 2024.03.01 - Fisrt version
+
+#-------------------------------------------
+# FEATURES
+#-------------------------------------------
+ # - lvgl displey touhscreen
+ # - voice assistant
+ # - indoor airquality
+
+
+#-------------------------------------------
+# SUBTITUTIONS - basic definitions and description of the device
+#-------------------------------------------
+substitutions:
+  friendly_name: assistant-voice
+  device_name: assistant-voice
+  created_by: "StudioTiiM 2024"
+  device_description: "Voice assitantn HA"
+#-------------------------------------------
+# POWER CONSUMPTION 
+# whit multimeter
+#-------------------------------------------
+# Power consumption V
+# Booting Peak MCU:         mA
+# Normal-  wifi:            mA
+# Normal - no wifi:         mA
+# Deep sleep:               mA
+
+#-------------------------------------------
+# DEFINE PINS AND VARIABILES
+# CIRCUIT AND MODULES - basic definitions and description of the device
+#-------------------------------------------
+ # ----- MCU -----
+  # Module: ESP32-S3-WROOM-1U-N16R8
+  # Board   ESP32-4848S040
+   # Circuit: 
+   # LDO:
+   # Current per pin: max 40mA (default 20mA) / Cumulative: 1500mA
+   # Power Consumption: Peak   / Normal wifi:    / Normal:   / Wifi disable: / DeepSleep:  
+   # Specification: Chip Family: ESP32 / Chip Model: ESP32-D0WDQ6 (revision 1) / Number of Cores: 2 /Max CPU Frequency: 240MHz / Has Bluetooth: YES / Has Embedded Flash: NO / Has Factory-Calibrated ADC: YES /MAC Address: C8:C9:A3:C7:C4:F4
+   
+
+   # Pinout:
+    #                       +-----------------------+
+    #                       |  +--+  +--+  +--+--+  |
+    #                       |  |  |  |  |  |  |  |  |
+    #                       |  |  +--+  +--+  |  |  |
+    #                       |                       |
+    #                GND --+|                       |+-- GND
+    #                3V3 --+|                 |o|   |+-- GPIO01 ADC1 TOUCH
+    #                 EN --+|                       |+-- GPIO02 ADC1 TOUCH
+    # ADC1 TOUCH  GPIO04 --+|   +----------+        |+-- GPIO43 TXD0
+    # ADC1 TOUCH  GPIO05 --+|   | MCU      |        |+-- GPIO44 RXD0
+    # ADC1 TOUCH  GPIO06 --+|   |          |        |+-- GPIO42 MTMS
+    # ADC1 TOUCH  GPIO07 --+|   |          |        |+-- GPIO41 MTDI
+    # ADC2        GPIO15 --+|   |          |        |+-- GPIO40 MTD0
+    # ADC2        GPIO16 --+|   +----------+        |+-- GPIO39 MTCK
+    # ADC2 TXD1   GPIO17 --+|     +---------+       |+-- GPIO38 
+    # ADC2 RXD1   GPIO18 --+|    -| FLASH   |-      |+-- GPIO37 PSRAM
+    # ADC1 TOUCH  GPIO08 --+|    -|         |-      |+-- GPIO36 PSRAM
+    # ADC2 USB_D- GPIO19 --+|    -|         |-      |+-- GPIO35 PSRAM 
+    # ADC2 USB_D+ GPIO20 --+|    -|        °|-      |+-- GPIO0  NOT_USE 
+    #                       |     +---------+       |
+    #                       +-----------------------+
+    #                        + + + + + + + + + + + +
+    #                        | | | | | | | | | | | |
+    # ADC1 TOUCH GPIO03  ----+ | | | | | | | | | | +---- GPIO45 NOT_USE
+    # NOT_USE    GPIO46  ------+ | | | | | | | | +------ GPIO48
+    # ADC1 TOUCH GPIO09  --------+ | | | | | | +-------- GPIO47
+    # ADC1 TOUCH GPIO10  ----------+ | | | | +---------- GPIO21 
+    # ADC2 TOUCH GPIO11  ------------+ | | +------------ GPIO14 ADC1 TOUCH  
+    # ADC2 TOUCH GPIO12  --------------+ +-------------- GPIO13 ADC2 TOUCH
+
+   # Description pins:
+    # PINS ESP32    | USED ON PROJECT             | FUNCTION          | INPUT | OUTPUT | RTC*13 | ADC   | PWM | TOUCH |PU/PD*12| RESISTOR | BOOT       | FLASH   | HIGH AT BOOT | BOOT FAILS | NOTES
+    # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # EN            |                 BUTTON RST  | RESET             |       |        |        |       |     |       |        |          |            |         |              |            |
+    # GPIO0         | DISPLAY DB17(R) BUTTON BOOT | STRAPPING *1      | OK!   | OK!    | OK     |       | OK  |       | OK     |          |            |         |              |            |
+    # GPIO01        | SPEAKER BCLK /RELAY L3      |                   | OK    | OK     | OK     | OK    | OK  | OK    | OK     |          |            |         |              |            |
+    # GPIO02        | SPEAKER LRCLK/RELAY L2      |                   | OK    | OK     | OK     | OK    | OK  | OK    | OK     |          |            |         |              |            | 
+    # GPIO03        | DISPLAY DB8(G)              | STRAPPING *1      | OK!   | OK!    | OK     | OK    | OK  | OK    | OK     |          |            |         |              |            | 
+    # GPIO04        | DISPLAY DB1(B)              | *2                | OK    | OK     | OK     | OK    | OK  | OK    | OK     |          |            |         |              |            |
+    # GPIO05        | DISPLAY DB2(B)              | *2                | OK    | OK     | OK     | OK    | OK  | OK    | OK     |          |            |         |              |            |
+    # GPIO06        | DISPLAY DB3(B)              | *2                | OK    | OK     | OK     | OK    | OK  | OK    | OK     |          |            |         |              |            |
+    # GPIO07        | DISPLAY DB4(B)              | *2                | OK    | OK     | OK     | OK    | OK  | OK    | OK     |          |            |         |              |            |
+    # GPIO08        | DISPLAY DB6(G)              | I2C SCL  def. *2  | OK    | OK     | OK     | OK    | OK  | OK    | OK     |          |            |         |              |            |
+    # GPIO09        | DISPLAY DB10(G)             | I2C SDA  def. *2  | OK    | OK     | OK     | OK    | OK  | OK    | OK     |          |            |         |              |            |
+    # GPIO10        | DISPLAY DB11(G)             | SPI SCO  def. *2  | OK    | OK     | OK     | OK    | OK  | OK    | OK     |          |            |         |              |            |
+    # GPIO11        | DISPLAY DB13(B)             | SPI MOSI def. *2  | OK    | OK     | OK     | OK *9 | OK  | OK    | OK     |          |            |         |              |            |
+    # GPIO12        | DISPLAY DB14(R)             | SPI SCK  def. *2  | OK    | OK     | OK     | OK *9 | OK  | OK    | OK     |          |            |         |              |            |
+    # GPIO13        | DISPLAY DB15(R)             | SPI MISO def. *2  | OK    | OK     | OK     | OK *9 | OK  | OK    | OK     |          |            |         |              |            |
+    # GPIO14        | DISPLAY DB16(R)             | *2                | OK    | OK     | OK     | OK *9 | OK  | OK    | OK     |          |            |         |              |            |
+    # GPIO15        | DISPLAY DB5(B)              | XTAL_32K_P *2 *10 | OK    | OK     | OK     | OK *9 | OK  |       | OK     |          |            |         |              |            |
+    # GPIO16        | DISPLAY HSYNC               | XTAL_32K_N *2 *10 | OK    | OK     | OK     | OK *9 | OK  |       | OK     |          |            |         |              |            |
+    # GPIO17        | DISPLAY VSYNC               | U1_TXD *2         | OK    | OK     | OK     | OK *9 | OK  |       | OK     |          |            |         |              |            |
+    # GPIO18        | DISPLAY DE                  | U1_RXD *2         | OK    | OK     | OK     | OK *9 | OK  |       | OK     |          |            |         |              |            |
+    # GPIO19        | TOUCH TP_SDA                | USB_D- *3         | OK    | OK     | OK     | OK *9 | OK  |       | OK     |          |            |         |              |            |
+    # GPIO20        | DISPLAY DB7(R)              | USB_D+ *3         | OK    | OK     | OK     | OK *9 | OK  |       | OK     |          |            |         |              |            |
+    # GPIO21        | DISPLAY PCLK                |                   | OK    | OK     | OK     |       | OK  |       | OK     |          |            |         |              |            |
+    
+    # GPIO26        | Flash/PSRAM SPICS1          | SPICS1 *6         |
+    # GPIO27        | Flash/PSRAM SPIHD           | SPIHD  *6         |
+    # GPIO28        | Flash/PSRAM SPIWP           | SPIWP  *6         |
+    # GPIO29        | Flash/PSRAM SPICS0          | SPICS0 *6         |
+    # GPIO30        | Flash/PSRAM SPICLK          | SPICLK *6         |
+    # GPIO31        | Flash/PSRAM SPIQ            | SPIQ   *6         |
+    # GPIO32        | Flash/PSRAM SPID            | SPID   *6         |
+    # GPIO33        | Flash/PSRAM SPIWP           | SPIQ4  *4         |
+    # GPIO34        | Flash/PSRAM SPIWP           | SPIQ5  *4         |
+    
+    # GPIO35        | PSRAM 8MB                   | SPIQ6  *4         |       |        |        |       | OK  |       | OK     |          |            |         |              |            |
+    # GPIO36        | PSRAM 8MB                   | SPIQ7  *4         |       |        |        |       | OK  |       | OK     |          |            |         |              |            |
+    # GPIO37        | PSRAM 8MB                   | SPIQ8  *4         |       |        |        |       | OK  |       | OK     |          |            |         |              |            |
+    # GPIO38        | DISPLAY BL_C                | SPIDQS *4         | OK    | OK     |        |       | OK  |       | OK     |          |            |         |              |            |
+    # GPIO39        | DISPLAY LCD_CS              | MTCK *5           | OK    | OK     |        |       | OK  |       | OK     |          |            |         |              |            |
+    # GPIO40        | SPEAKER SD/RELAY L1         | MTD0 CLK_OUT2 *5  | OK    | OK     |        |       | OK  |       | OK     |          |            |         |              |            |
+    # GPIO41        | MIC SD /SDCARD D1           | MTDI CLK_OUT1 *5  | OK    | OK     |        |       | OK  |       | OK     |          |            |         |              |            |
+    # GPIO42        | MIC WC /SDCARD D3           | MTMS *5           | OK    |        |        |       | OK  |       | OK     |          |            |         |              |            |
+    # GPIO43        | MIC SCK/SLOT H1/TXD/UART    | U0_TXD *7         | OK!   | OK!    |        |       | OK  |       | OK     |          |            |         |              |            |
+    # GPIO44        | SM300D2/SLOT H1/RXD/UART    | U0_RXD *7         | OK!   | OK!    |        |       | OK  |       | OK     |          |            |         |              |            |
+    # GPIO45        | TOUCH TP_SCL USB_D-         | STRAPPING VSPI *1 | OK!   | OK!    |        |       | OK  |       | OK     |          |            |         |              |            |
+    # GPIO46        | DISPLAY DB9(G)              | STRAPPING LOG  *1 | OK!   | OK!    |        |       | OK  |       | OK     |          |            |         |              |            |
+    # GPIO47        | SPI DISPLAY SDCARD SDA      | SPICLK_P          | OK    | OK     |        |       | OK  |       | OK     |          |            |         |              |            |
+    # GPIO48        | SPI DISPLAY SDCARD SCK      | SPICLK_L          | OK    | OK     |        |       | OK  |       | OK     |          |            |         |              |            |
+
+    # *1  Strapping pins: GPIO0  PULLUP  : Boot Mode. Weak pullup during reset. (Boot Mode 0=Boot from Flash, 1=Download)
+    #                     GPIO03 FLOATING: JTAG Mode. Weak pull down during reset. (JTAG Config)
+    #                     GPIO45 PULLDOWN: SPI voltage. Weak pull down during reset. (SPI Voltage 0=3.3v 1=1.8v)
+    #                     GPIO46 PULLDOWN: Boot mode. Weak pull down during reset. (Enabling/Disabling ROM Messages Print During Booting)
+    # *2  60μs glitch on boot: Low-level glitch: the pin is at a low level output status for 60us.
+    #     GPIO18    : Low 60us/high 60us
+    #     GPIO19, 20: Low 60us/ 2*high 60us
+    # *3  UART whit USB connected pin D+ and D-
+    #     Source: https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/usb_device.html
+    # *4  not available if octal Flash or SPI RAM is used 
+    # *5  JTAG interface: The default behaviour of these pins is JTAG debugging, during firmware download mode they will have spurious values on them.
+    #     This can be turned off by burning some eFuses in conjunction with GPIO3 (see the datasheet for details).
+    # *6  not available if SPI RAM is used 
+    # *7  These default to UART0 until they are used by your code. Disable hardware uart. logger baud_rate: 0
+    # *8  DAC Pins: There is NO DAC on the ESP32-S3 - you can simulate analog output using PWM or I2S PDM.
+    # *9  ADC2 not available if wifi enable 
+    # *10 xTAL External 32k crystal
+    # *11 PU/PD: Pins that have software configurable pull-up/pull-down functionality.
+    # *12 RTC: Pins that are RTC GPIOs and can be used in deep-sleep mode.
+    
+    # I2S
+     # The ESP32 S3 has two I2S interfaces which can be mapped to any available gpio pins.
+    
+    # I2C
+     # Default pins are:
+     # GPIO9 SCL
+     # GPIO8 SDA
+     # There is an aditional I2C interface which does not seem to have default pins (wip).
+    
+    # SPI
+     # The ESP32 S3 has four SPI interfaces which are:
+      # SPI0 used by ESP32-S3’s cache and Crypto DMA (EDMA) to access in-package or off-package flash/PSRAM
+      # SPI1 used by the CPU to access in-package or off-package flash/PSRAM
+      # SPI2 is a general purpose SPI controller with its own DMA channel
+      # SPI3 is a general purpose SPI controller with access to a DMA channel shared between several peripherals
+
+ # ----- TOUCH -------
+  # Modul: Goodix GT911 touch platform
+   # Support: maximum of 4 touch key and guestures, It is strongly recommended that transmission rate be kept at or below 400Kbps
+   # Specifications: Voltage: 1.8V internal LDO / Glass 0.55 - 2.0mm / Operational Range: Temperature: -40 ~ +85°C Humidity: 95%
+   # Circuit: Interface: I2C address: 0x5D,
+   # Power consumption: normal: 14.5mA sleep: 0.12mA
+   
+   # Pinout:
+    # 1. GND
+    # 2. SDA
+    # 3. SCL
+    # 4. RST = 
+    # 5. INT = GND
+    # 6. VDD
+
+ # ----- DISPLAY -----
+  # Modul: 0400B009 (not found datasheet)
+  # Similar datasheet round display: TFT LCD Display Datasheet ER-TFT021-1
+   # Source:    https://www.buydisplay.com/480x480-round-ips-tft-lcd-display-2-1-inch-capacitive-touch-circle-screen
+   # Desciption github:
+    # Tasmota:  https://github.com/arendst/Tasmota/discussions/20527
+    # Esphome:  https://github.com/esphome/esphome/pull/5872
+    # Openhasb: https://github.com/HASwitchPlate/openHASP/issues/603
+    
+  # Description pinout:
+   # PIN NO | PIN NAME | DESCRIPTION     | GPIO         | DESCRIPTION        # PIN NO | PIN NAME | DESCRIPTION     | GPIO       | DESCRIPTION
+   # 1      | VLED+    | LED ANODE       | KDG2V GPIO38 | BACKLIGHT DISPLAY  # 21     | DB5      | 18-BIT BUS      | GPIO15     |
+   # 2      | VLED-    | LED CATHODE     | GND          |                    # 22     | DB6      | 18-BIT BUS      | GPIO08     |
+   # 3      | VLED-    | LED CATHODE     | GND          |                    # 23     | DB7      | 18-BIT BUS      | GPIO20     |
+   # 4      | GND      | GROUND          | GND          |                    # 24     | DB8      | 18-BIT BUS      | GPIO03     |
+   # 5      | VCC      | POWER SUPPLY    | 3V3          |                    # 25     | DB9      | 18-BIT BUS      | GPIO46     |
+   # 6      | RST      | RESET ACTIVE LOW| NC           |                    # 26     | DB10     | 18-BIT BUS      | GPIO09     |
+   # 7      | NC       |                 | NC           |                    # 27     | DB11     | 18-BIT BUS      | GPIO10     |
+   # 8      | NC       |                 | NC           |                    # 28     | DB12     | 18-BIT BUS      | NC         |
+   # 9      | SDA      | DATA I/O BI SPI | GPIO47       |                    # 29     | DB13     | 18-BIT BUS      | GPIO11     |
+   # 10     | SCK      | CLOCK I SPI     | GPIO48       |                    # 30     | DB14     | 18-BIT BUS      | GPIO12     |
+   # 11     | CS       | CHIP SELECTED   | GPIO39       |                    # 31     | DB15     | 18-BIT BUS      | GPIO13     |
+   # 12     | PCLK     | DOT CLOCK RGB   | GPIO21       |                    # 32     | DB16     | 18-BIT BUS      | GPIO14     |
+   # 13     | DE       | DATA ENABLE     | GPIO18       |                    # 33     | DB17     | 18-BIT BUS      | GPIO0      | 
+   # 14     | VSYNC    | FRAME SYNC      | GPIO17       |                    # 34     | GND      | GROUND          | GND        |
+   # 15     | HSYNC    | LINE SYNC       | GPIO16       |                    # 35     | TP-INT   | TOUCH INTERRUPT | GND        |
+   # 16     | DB0      | 16-BIT BUS      | NC           |                    # 36     | TP-SDA   | TOUCH SDA I2C   | GPIO19     | TOUCH SDA   GT911
+   # 17     | DB1      | 16-BIT BUS      | GPIO04       |                    # 37     | TP-SCL   | TOUCH SCL I2C   | GPIO45     | TOUCH SCL   GT911
+   # 18     | DB2      | 16-BIT BUS      | GPIO05       |                    # 38     | TP-RST   | TOUCH RESET     | RST        | TOUCH RESET GT911
+   # 19     | DB3      | 16-BIT BUS      | GPIO06       |                    # 39     | TP-VCL   | POWER SUPPLY    | VDD        | TOUCH POWER SUPPLY
+   # 20     | DB4      | 16-BIT BUS      | GPIO07       |                    # 40     | GND      | GROUND          | GND        |
+
+   # RGB DATA SIGNAL
+    # DB0:  BLUE  LSB GPIO04  
+    # DB5:  BLUE  MSB 
+    # DB6:  GREEN LSB
+    # DB11: GREEN MSB
+    # DB12: RED   LSB
+    # DB17: RED   MSB
+
+  display_cs_pin:    GPIO39
+  display_en_pin:    "5" # not connected pseudo expander pin
+  display_de_pin:    GPIO18
+  display_hsync_pin: GPIO16
+  display_vsync_pin: GPIO17
+  display_pclk_pin:  GPIO21
+    
+    # Data pin: show below on display label
+    
+  # Backlight:
+   # Module: KDG2V (not found datasheet)
+    # Pinout: (not fit exactly)
+    # N.| CONNECT | Pin | Scheme | Pin | CONNECT | N.
+    #                     +----+
+    # 1 | 5V      | IN   -|°   |-  IN  | 5V      | 6
+    # 2 | GND     | GND  -|    |-  SW  | LED_A   | 5
+    # 3 | LED_K   | FB   -|    |-  EN  | GPIO38  | 4
+    #                     +----+
+  display_led_pin: GPIO38
+  
+ # ----- SDCARD ------
+  # Remove
+  # Pinout:
+   # N.| NAME     | GPIO   | PULLUP | NOTES
+   # -------------------------------------
+   # 1 | DAT2/X   |        | 10k    | 
+   # 2 | DAT3/CS  | GPIO42 | 10k    | Unsolder pullup -> free pin
+   # 3 | CMD/DI   | GPIO47 | 10k    | DISPLAY SPI mosi_pin
+   # 4 | VDD      | VCC    |        | 
+   # 5 | CLK/SCLK | GPIO48 |        | DISPLAY SPI clk_pin
+   # 6 | VSS      | GND    |        | 
+   # 7 | DAT0/DO  | GPIO41 | 10k    | Unsolder pullup -> free pin
+   # 8 | DAT1/x   |        |        | 
+
+ # ----- SPEAKER -----
+  # Circuit: The 4-inch screen relay and I2S audio are shared IO ports, IO1, IO2, and IO40. If audio is needed, the 0 ohm resistors R25, R26, and R27 should be moved to R21, R22, and R23.
+  # Speaker: UNISON U3608B35U 8Ω 1.5W 701
+  # Chip: NS4168
+   # Pinout:                                                                                                                                                                                                                                                                                     
+    # N.| CONNECTED | DESCRIPTION     | Pin   | Scheme | Pin | DESCRIPTION     | CONNECTED | N.
+    #                                           +----+
+    # 1 | VCC-> 1MΩ | Control pin     | CTRL   -|°   |-  VoP | Output positive | SPEAKER   | 8
+    # 2 | GPIO02    | I2S Frame clock | L/RCLK -|    |-  GND | Ground          | GND       | 7
+    # 3 | GPIO01    | I2S bit clock   | BCLK   -|    |-  VDD | Power supply    | VCC       | 6
+    # 4 | GPIO40    | Serial data     | SDATA  -|    |-  VoN | Output Negative | SPEAKER   | 5
+    #                                           +----+
+
+  speaker_dout_pin: GPIO40
+  # ----- MICROPHONE -----
+   # Chip: INMP441 
+   # Circuit: L/R pin connected to GND LEFT channal only
+  mic_din_pin:      GPIO41 # SD
+  
+  # ----- VOICE ASSITANT -----
+  # Phases of the Voice Assistant
+  # The voice assistant is ready to be triggered by a wake word
+  #voice_assist_idle_phase_id: '1'
+  # The voice assistant is waiting for a voice command (after being triggered by the wake word)
+  #voice_assist_waiting_for_command_phase_id: '2'
+  # The voice assistant is listening for a voice command
+  #voice_assist_listening_for_command_phase_id: '3'
+  # The voice assistant is currently processing the command
+  #voice_assist_thinking_phase_id: '4'
+  # The voice assistant is replying to the command
+  #voice_assist_replying_phase_id: '5'
+  # The voice assistant is not ready
+  #voice_assist_not_ready_phase_id: '10'
+  # The voice assistant encountered an error
+  #voice_assist_error_phase_id: '11'
+  
+ # ----- BATTERY -----
+  # Chip: IP5306 (Datasheet source: https://datasheetspdf.com/datasheet/IP5306.html)
+  # Specifications: 2.4A synchronous boost conversion, 2.1A synchronous switch charging / Boost efficiency up to 92% / Charging efficiency up to 91% / Input: 4.65 ~ 5.5V / 
+  # Power consumption Standby: 100 μA
+  # Protections: Output overcurrent, overvoltage, short circuit protection, Input overvoltage, overcharge, overdischarge, overcurrent discharge protection, Overheat protection of the whole machine
+   # Circuit: key -> connected to SW button
+   # Pinout:                                                                                                                                                                                                                                                                                     
+    # N.| CONNECTED | DESCRIPTION     | Pin   | Scheme  | Pin   | DESCRIPTION                             | CONNECTED  | N.
+    #                                          +-------+
+    # 1 | 5V IN     | INPUT 5V        | VIN   -|°      |-  VOUT | 5V OUTPUT                               | 5V OUT     | 8
+    # 2 | ? R50     | BAT INDICATOR 1 | LED1  -| POWER |-  SW   | DC DC SWITCH NODE                       | INDUCTOR   | 7
+    # 3 | NC        | BAT INDICATOR 2 | LED2  -| PAD   |-  BAT  | VOLTAGE SENS                            | ?          | 6
+    # 4 | ?         | BAT INDICATOR 3 | LED3  -| GND   |-  KEY  | ON/OFF KEY MULTIPLEX TORCH LIGHT DRIVER | SW1 BUTTON | 5
+    #                                          +-------+
+
+# ----- BUTTON ------
+ # Module:
+  # Circuit: 10kΩ PULLUP
+  # Description: When button push displey change color scheme because red datapoint. But the button is functional
+  button_pin: GPIO0
+  
+  # Internal button: RESET connected to EN MCU / SW1 connected to KEY battery charger module
+
+ # ----- REAL TIME CLOCK -----
+  # Modul: Compact DS3231 real time clock RPI whit 3.0V battery
+   # Modification: unsolder holder
+   # Chip: DS3231SN RTC
+   # Specifications: Voltage: 2.3 ~ 5.5V / Operational Range: Temperature: 0 ~ +70°C  / 0-40°C 2ppm error 1min
+   # Circuit: Interface: I2C; only VCC, GND, SDA, SCL pin connected
+   # Power consumption: standby <110µA; measure <200µA
+  # Circuit: Interface: I2C address: 0x68,
+
+ # ----- SM300D2 7-in-1 Air Quality  -----
+  # Sensor 	Range 	Accuracy
+  # CO2 	400 - 5000 ppm 	± 50ppm
+  # Formaldehyde 	1 - 1000 µg/m³ 	?
+  # TVOC 	0 - 2000 µg/m³ 	Calculated
+  # PM2.5 	5 - 100 µg/m³ 	± 10%
+  # PM10 	5 - 100 µg/m³ 	± 10%
+  # Temperature 	-40 to +125 °C 	± 0.5 °C
+  # Humidity 	0 - 100% 	± 3%
+   # Source: https://github.com/moritzgloeckl/esp-air
+   
+  # Create AQI sensor:
+  # Source all air quality snesor:   https://atmotube.com/atmocube-support/indoor-air-quality-index-iaqi
+  # Source temperature and humidity: https://www.breeze-technologies.de/blog/calculating-an-actionable-indoor-air-quality-index/
+   # Label              | IAQI      | CO2(ppm)    | TVOC(Index)  | NOx(Index) | CH2O(ppm)  | PM1(µg/m3) | PM2.5(µg/m3) | PM10(µg/m3) | CO(ppm)     | O3(ppm)        |
+   # ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+   # Good               |   0 - 100 |  400 -  599 |     1 -  199 |    1 - 49  |   0 -   50 |     0 - 14 |      0 - 20  |     0 -  30 |  0   -  1.7 | 0 - 0.025      |
+   # Moderate           | 101 - 200 |  600 - 999  |   200 -  660 |   50 - 99  |  51 -  150 |    15 - 34 |     21 - 50  |    31 -  75 |  1.8 -  8.7 | 0.026 - 0.06   |
+   # Polluted           | 201 - 300 | 1000 - 1499 |   661 - 1100 |  100 - 299 | 151 -  300 |    35 - 61 |     51 - 90  |    76 - 125 |  8.8 - 10   | 0.061 - 0.075  |
+   # Very Polluted      | 301 - 400 | 1500 - 2499 |  1101 - 1651 |  300 - 349 | 301 -  500 |    62 - 95 |     91 - 140 |   126 - 200 | 10.1 - 15   | 0.076 - 0.1    |
+   # Severely Polluted  | 401 - 500 | 2500 - 5000 |  1651 - 2000 |  350 - 500 | 501 - 1000 |   96 - 150 |    141 - 200 |   201 - 300 | 15.1 - 30   | 0.101 - 0.3    |
+
+  # Module: BH1750 GY-302 lux meter
+   # Specifications: 3V ~ 5V / Range:  1 ~ 65 535 lx
+   # Circuit: Interface: I2C address: 0x23
+   # Consumption: normal 4.4mA
+   # http://wiki.sunfounder.cc/index.php?title=GY-302_BH1750_Digital_Light_Intensity_Module
+  # Settings display brigthness option
+  ambient_threshold_low:      "0.0"   # 
+  ambient_threshold_high:     "100.0" # 
+  minimum_display_brightness: "0.20"  # 
+
+  # WHEATER
+  weather_humidity:     sensor.weather_station_humidity
+  weather_pressure:     sensor.weather_station_pressure
+                        
+  weather_condition:    weather.zelenydom
+  weather_forecast:     sensor.weather_forecast_days
+  weather_station:      sensor.weather_station_display
+                        
+  # CALENDAR            
+  calendar_event:       sensor.calendar_display
+  calendar_nameday:     calendar.slovenske_mena
+  calendar_dayofweek:   sensor.dayoftheweek
+                        
+  # NEWS                
+  breaking_news:        sensor.new_breaking_title
+                        
+  # METEOALARM          
+  meteoalarm_event:     binary_sensor.meteoalarm
+                        
+  # CIRCUITBREAKER      
+  circuit_bedroom:      switch.circuit_breaker_3_switch
+  circuit_kitchen:      switch.sonoff_100132254b
+  circuit_bathroom:     switch.energy_circuitbreaker1_switch
+  circuit_livingroom:   switch.energy_solar_relay_2_house
+  circuit_exterior:     switch.circuit_breaker_2_switch
+  circuit_cellar:       switch.energy_solar_relay_3_cellar
+  circuit_atelier:      switch.atelier_rele_l1
+                        
+  # SWITCHES            
+  switch_mediacenter:   switch.esp_gateway_socket_1
+  switch_poolfilter:    switch.power_socket_pool_socket1
+  switch_watering:      switch.well_pump_switch_irrigation
+                        
+  # LIGHTS              
+  light_livingroom:     light.light_rgbww
+  light_mediacenter:    light.light_ww
+  light_kitchensink:    switch.isa_kg03hl_ac10_left_switch_service
+  light_bar:            switch.isa_kg03hl_ac10_middle_switch_service
+  light_hall:           light.light_wall_relay
+  
+  # CLIMATE
+  climate_thermostat:   climate.thermostat
+  climate_aclivingroom: climate.obyvacia_izba_klima
+  climate_acatelier:    climate.atelier_klima
+  thermostat_sensor:    sensor.thermostat_sensor
+  acliving_sensor:      sensor.ac_living_sensor
+  acatelier_sensor:     sensor.ac_atelier_sensor
+  
+  # VALVES
+  valve_1:              valve.heating_valve1_bath
+  valve_2:              valve.heating_valve2_living
+  valve_3:              valve.heating_valve3_kids
+  valve_4:              valve.heating_valve4_bed
+  valve_5:              valve.heating_valve5_floor
+  valve_6:              valve.heating_valve6_work
+  valve_1_temp:         binary_sensor.valve_1_template
+  valve_2_temp:         binary_sensor.valve_2_template
+  valve_3_temp:         binary_sensor.valve_3_template
+  valve_4_temp:         binary_sensor.valve_4_template
+  valve_5_temp:         binary_sensor.valve_5_template
+  valve_6_temp:         binary_sensor.valve_6_template
+  valve_auto:           automation.kurenie_okruh_obyvacia_izba
+  
+  # VACUUM
+  vacuumbot:            vacuum.dreamebot_l10s_pro
+  vacuum_sensor:        sensor.vacuum_sensor
+  vacuum_mode:          select.dreamebot_l10s_pro_cleaning_mode
+  vacuum_fan:           select.dreamebot_l10s_pro_suction_level
+  
+#-------------------------------------------
+# PROTOCOLS
+#-------------------------------------------
+ # ----- PROTOCOLS PINS -----
+  # I2C
+  i2c_sda_pin:      GPIO19
+  i2c_scl_pin:      GPIO45
+  # SPI             
+  spi_clk_pin:      GPIO48
+  spi_mosi_pin:     GPIO47
+  # UART            
+  #uart_tx_pin:     GPIO43 
+  uart_rx_pin:      GPIO44
+  # I2S
+  i2s_lrclk_pin:    GPIO02
+  i2s_bclk_pin:     GPIO01
+  i2s_lrclk_pin_in: GPIO42 # WS
+  i2s_bclk_pin_in:  GPIO43 # SCK
+  
+ # ----- PROTOCOLS SETTINGS -----
+i2c:
+  - id: bus_a
+    sda: "$i2c_sda_pin"
+    scan: true
+    scl: 
+      number: "$i2c_scl_pin"
+      ignore_strapping_warning: true
+    #frequency: 100kHz
+
+spi:
+  - id: lcd_spi
+    clk_pin:  "$spi_clk_pin"
+    mosi_pin: "$spi_mosi_pin"
+
+uart:
+  #tx_pin:  "$uart_tx_pin"
+  rx_pin:
+    number: "$uart_rx_pin"
+    mode:    INPUT_PULLDOWN
+  baud_rate: 9600
+
+i2s_audio:
+  - id:            i2s_out
+    i2s_lrclk_pin: 
+      number: $i2s_lrclk_pin # WS
+      #allow_other_uses: true
+    i2s_bclk_pin:  
+      number: $i2s_bclk_pin  # SCK
+      #allow_other_uses: true
+  - id:            i2s_in
+    i2s_lrclk_pin: 
+      number: $i2s_lrclk_pin_in # WS
+      #allow_other_uses: true
+    i2s_bclk_pin:  
+      number: $i2s_bclk_pin_in  # SCK
+      #allow_other_uses: true
+    
+#-------------------------------------------
+# ESPHOME PLATFORM SETTINGS
+#-------------------------------------------
+esphome:
+  name: "$device_name"
+  min_version: 2024.9.0
+  platformio_options:
+    board_build.flash_mode: dio
+    # Source: https://github.com/RyanEwen/esphome-lvgl/blob/a6ab09054e6c9506bd95166bc1b856b4fc9cd79c/devices/ESP32-8048S050.yaml
+    build_flags: "-DBOARD_HAS_PSRAM"
+    board_build.arduino.memory_type: qio_opi
+    board_build.psram_type: opi
+    board_upload.maximum_size: 16777216
+    board_upload.maximum_ram_size: 524288
+    
+    #build_unflags: -Werror=all
+    #platform_packages:
+    # - framework-espidf @ 5.4.0
+  on_boot:
+    - priority: 100
+      then:
+        - ds1307.read_time:
+        - delay: 50ms
+        - lvgl.label.update:
+            id: label_time_hours
+            text:
+              format: "%02d"
+              args: [ 'id(esptime).now().hour']
+        - lvgl.label.update:
+            id: label_time_minutes
+            text:
+              format: "%02d"
+              args: ['id(esptime).now().minute']
+    #- delay: 5s
+    #- lvgl.widget.hide: boot_screen
+
+#-------------------------------------------
+# ESP MCU SETTINGS
+#-------------------------------------------
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    version: recommended
+    #version: 5.1.1
+    #platform_version: 6.4.0
+    # voice assitant freeze
+    #version: 5.3.1
+    #platform_version: 6.8.1
+    #version:          5.2.1
+    #platform_version: 6.6.0
+    sdkconfig_options:
+      #CONFIG_ESP32_S3_BOX_3_BOARD: "y"
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
+      CONFIG_ESP32S3_DATA_CACHE_64KB:      "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B:  "y"
+      CONFIG_AUDIO_BOARD_CUSTOM:           "y"
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS:    "y"
+      CONFIG_SPIRAM_RODATA:                "y"
+      
+      COMPILER_OPTIMIZATION_SIZE:          "y"
+      CONFIG_ESPTOOLPY_FLASHSIZE_16MB:     "y"
+      
+      # add source: https://github.com/mikey60/home-assistant-voice-pe/blob/cb4186f814c31917c7021d57c2e7315b5f00495f/home-assistant-voice.yaml#L1542
+      # 40kb free DRAM
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB:     "y"
+      CONFIG_SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY: "y"
+      CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP:      "y"
+      
+      # ERROR Error receiving acknowledge binary size: timed out
+      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "10"
+
+      # Settings based on https://github.com/espressif/esp-adf/issues/297#issuecomment-783811702
+      #CONFIG_ESP32_WIFI_STATIC_RX_BUFFER_NUM: "16"
+      CONFIG_ESP32_WIFI_DYNAMIC_RX_BUFFER_NUM: "32"
+      #CONFIG_ESP32_WIFI_STATIC_TX_BUFFER: "y"
+      #CONFIG_ESP32_WIFI_TX_BUFFER_TYPE: "0"
+      CONFIG_ESP32_WIFI_STATIC_TX_BUFFER_NUM: "8"
+      #CONFIG_ESP32_WIFI_CACHE_TX_BUFFER_NUM: "32"
+      #CONFIG_ESP32_WIFI_AMPDU_TX_ENABLED: "y"
+      #CONFIG_ESP32_WIFI_TX_BA_WIN: "16"
+      #CONFIG_ESP32_WIFI_AMPDU_RX_ENABLED: "y"
+      #CONFIG_ESP32_WIFI_RX_BA_WIN: "32"
+      #CONFIG_LWIP_MAX_ACTIVE_TCP: "16"
+      #CONFIG_LWIP_MAX_LISTENING_TCP: "16"
+      #CONFIG_TCP_MAXRTX: "12"
+      #CONFIG_TCP_SYNMAXRTX: "6"
+      #CONFIG_TCP_MSS: "1436"
+      #CONFIG_TCP_MSL: "60000"
+      CONFIG_TCP_SND_BUF_DEFAULT: "65535"
+      CONFIG_TCP_WND_DEFAULT:     "512000"  # Adjusted from linked settings to avoid compilation error
+      CONFIG_TCP_RECVMBOX_SIZE:   "512"
+      #CONFIG_TCP_QUEUE_OOSEQ: "y"
+      #CONFIG_TCP_OVERSIZE_MSS: "y"
+      #CONFIG_LWIP_WND_SCALE: "y"
+      #CONFIG_TCP_RCV_SCALE: "3"
+      #CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "512"
+      #
+      #CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
+      #CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+#-------------------------------------------
+# LOGGER
+#-------------------------------------------
+logger:
+  baud_rate: 0
+  tx_buffer_size: 256
+  #level: VERBOSE
+  # hardware_uart: USB_SERIAL_JTAG
+  # hardware_uart : UART0 
+  # HW UART ENABLE 
+   # GPIO43-U0_TXD 
+   # GPIO44-U0_RXD
+  logs:
+    # Hidden warning: 
+    # [00:00:00][W][component:204]: Component xxxxxx took a long time for an operation (x.xx s).
+    # [00:00:00][W][component:205]: Components should block for at most 20-30ms.
+    # Source: https://github.com/esphome/issues/issues/4717
+    lvgl: ERROR
+    homeassistant.text_sensor: WARN
+    text_sensor: WARN
+    component: ERROR
+    
+#-------------------------------------------
+# API AND HTTP
+#-------------------------------------------
+api:
+# Client connected to HA status LVGL
+  on_client_connected:
+    - if:
+        condition:
+          binary_sensor.is_on: status_online
+        then:
+          - lvgl.widget.show: lvgl_online_status
+          - component.update: select_room
+          - component.update: sm300d2_aiq
+          
+          - micro_wake_word.start:
+          
+  on_client_disconnected:
+    then:
+      - voice_assistant.stop: 
+      - if:
+          condition:
+            binary_sensor.is_off: status_online
+          then:
+            - lvgl.widget.hide: lvgl_online_status
+          
+http_request:
+  verify_ssl: false
+#  #useragent: esphome/1.0
+  timeout: 10s
+  buffer_size_rx: 256
+  buffer_size_tx: 256
+
+#-------------------------------------------
+# ETHERNET
+#-------------------------------------------
+ota:
+  platform: esphome
+
+wifi:
+  ssid:        !secret wifi_ssid
+  password:    !secret wifi_password
+  manual_ip:
+    static_ip: 192.168.31.196
+    gateway:   192.168.31.1
+    subnet:    255.255.255.0
+
+#-------------------------------------------
+# PACKAGES
+#-------------------------------------------
+packages:
+  lvgl: !include packages/lvgl-package.yaml
+  
+#-------------------------------------------
+# EXTERNAL AND CUSTOM COMPONENT
+#-------------------------------------------
+external_components:
+  #-------------------------------------------
+  # COMPONENT st7701s rpi_dpi_rgb
+  #-------------------------------------------
+  #- source:  github://pr#5872
+  #  components: [ rpi_dpi_rgb, st7701s ]
+
+  - source: 
+      type: local
+      path: custom_component
+    components:
+      - st7701s
+      - rpi_dpi_rgb
+      #- online_image
+
+  #-------------------------------------------
+  # COMPONENT LVGL - OLD IS SUPPORTED
+  #-------------------------------------------
+  #- source: 
+  #    type: git
+  #    url: https://github.com/clydebarrow/esphome
+  #    ref: fd15094c0860df23d532881df36cfd16c7da1091 #previous commit - wont be needed in the future
+  #
+  #  components: [ lvgl, font, display ]
+
+    # github://clydebarrow/esphome@lvgl
+    # refresh: 10min
+    # components: [lvgl, font, display]
+      # ref: 39947a163440e3bbdee2d4082c11599de46ffbd0
+
+  # - source: github://pr#7184
+  #   refresh: 24h
+  #   components: [ lvgl ]
+
+  #-------------------------------------------
+  # COMPONENT AUDIO
+  #-------------------------------------------
+  #- source: github://pr#5230 # https://github.com/esphome/esphome/pull/5230
+  #  components:
+  #    - esp_adf 
+  #  refresh: 0s
+
+  #- source: github://pr#7672
+  #  components:
+  #    - audio
+  #    - speaker
+  #    - i2s_audio
+  #    - speaker
+  #    - media_player
+  #    - voice_assistant
+  #  refresh: 0s
+  - source:
+      type: git
+      url: https://github.com/esphome/voice-kit
+      ref: dev
+    components:
+      - media_player
+      - nabu
+    refresh: 0s
+    
+  #- source:
+  #    type: git
+  #    url: https://github.com/esphome/voice-kit
+  #    ref: dev
+  #  components:
+  #    - aic3204
+  #    - audio_dac
+  #    - media_player
+  #    - micro_wake_word
+  #    - microphone
+  #    - nabu
+  #    - nabu_microphone
+  #    - voice_assistant
+  #  refresh: 0s
+  #- source:
+  #    type: git
+  #    url: https://github.com/mikey60/home-assistant-voice-pe
+  #    ref: dev
+  #  components:
+  #    - nabu_microphone
+  #  refresh: 0s
+  #- source: github://pr#7605
+  #- source: 
+  #    type: local
+  #    path: custom_component
+  #  components: [ audio, i2s_audio, speaker]
+  #  refresh: 0s
+
+  - source: github://pr#7882
+    refresh: 0s
+    components: [ online_image ]
+#-------------------------------------------
+# ONLINE IMAGE
+#-------------------------------------------
+online_image:
+  #- url: "https://api.weather.com/v2/maps/dynamic?geocode=48.15,17.30&h=400&w=400&lod=8&apiKey=e1f10a1e78da46f5b10a1e78da96f525&product=twcRadarMosaic,648"
+  - url:            "http://homeassistant.local:8123/local/esphome/weather_map.png"
+    format:          PNG
+    id:              img_weathermap_on
+    type:            RGB565
+    buffer_size: 2048
+    on_download_finished:
+      - logger.log: "Download weatherimage finished"
+      - delay: 5s
+      - lvgl.image.update:
+            id:     mapweather
+            src:    img_weathermap_on
+      - lvgl.label.update:
+            id:     lvgl_outdate_image1
+            hidden: true
+      - delay: 5s
+      - component.update: img_lightiningmap_on
+
+    on_error:
+      - logger.log: "Not download weatherimage"
+      - lvgl.label.update:
+            id:     lvgl_outdate_image1
+            hidden: false
+
+  - url:            "http://homeassistant.local:8123/local/esphome/lightining_map.png"
+    format:          PNG
+    id:              img_lightiningmap_on
+    type:            RGB565
+    on_download_finished:
+      - delay: 5s
+      - lvgl.image.update:
+          id: maplightining
+          src: img_lightiningmap_on
+      - logger.log: "Download lightimage finished"
+      
+    on_error:
+      - logger.log: "Not download lightimage"
+
+  - url:             "http://homeassistant.local:8123/local/esphome/vacuum_snap.png"
+    format:           PNG
+    resize:           180x148
+    id:               img_vacuum_snap_on
+    type:             RGB565
+    use_transparency: true
+    on_download_finished:
+      - logger.log:  "Download vacuumimage finished"
+    on_error:
+      - logger.log:  "Not download vacuumimage"
+
+#-------------------------------------------
+# AUDIO
+# Source: 
+# https://github.com/esphome/esphome/pull/7672
+# https://tristam.ie/2024/1126/
+#-------------------------------------------
+#-------------------------------------------
+# SPEAKER AND MICROPHONE
+#-------------------------------------------
+speaker:
+  - platform:        i2s_audio
+    id:              speaker_id
+    dac_type:        external
+    i2s_dout_pin:   $speaker_dout_pin
+    i2s_audio_id:    i2s_out
+    bits_per_sample: 32bit
+    sample_rate:     16000
+    channel:         mono # left channal broken speaker no data out
+    buffer_duration: 100ms
+    timeout:         never
+
+microphone:    
+  - platform:        i2s_audio
+    id:              mic_id
+    adc_type:        external
+    i2s_din_pin:    $mic_din_pin # SD
+    channel:         left
+    pdm:             false
+    i2s_audio_id:    i2s_in
+    bits_per_sample: 32bit
+    sample_rate:     16000
+
+media_player:
+  - platform:         nabu
+    id:               speaker_media_player
+    name:            "${friendly_name} Media Player"
+    internal:         false
+    speaker:
+    sample_rate:      16000
+    volume_increment: 0.05
+    volume_min:       0.1
+    volume_max:       1
+    on_announcement:
+      - nabu.set_ducking:
+          decibel_reduction: 20
+          duration:          0.0s
+    files:
+      - id: wake_word_triggered_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/wake_word_triggered.flac
+    
+#-------------------------------------------
+# VOICE ASSISTANT AND MICRO WAKE WORLD
+#-------------------------------------------
+micro_wake_word:
+  id:                mww
+  models:
+    - model:         okay_nabu
+  microphone:        mic_id  
+  vad:                                 # Voice Activity Detection model 
+  on_wake_word_detected:
+    - if:
+        condition: lvgl.is_paused
+        then:
+          - light.turn_on: display_backlight
+          - lvgl.resume:
+          - lvgl.widget.redraw:
+          - lvgl.widget.hide: boot_screen
+    - lvgl.widget.hide: boot_screen
+    - lvgl.page.show: page_voice
+    - delay: 100ms
+    - script.execute:
+        id: play_sound
+        priority: true
+        sound_file: !lambda return id(wake_word_triggered_sound);
+    - delay: 300ms
+    - voice_assistant.start:
+        wake_word: !lambda return wake_word;
+   
+voice_assistant:
+  id:                      voice_assist
+  microphone:              mic_id
+  media_player:            speaker_media_player
+  #auto_gain: 31dBFS
+  #speaker:                 speaker_id
+  noise_suppression_level: 1.0
+  volume_multiplier:       2.0
+  on_listening:
+    #- lvgl.spinner.update:
+    #    id:          lvgl_spinner_voice
+    #    indicator:
+    #      arc_color: 0x1a97f6
+    - lvgl.label.update:
+        id:    lvgl_text_voice
+        text: "\U000F036F LISTENING"
+    - lvgl.obj.update:
+        id:           lvgl_round_voice
+        shadow_color: 0x1a97f6
+    - text_sensor.template.publish:
+        id: text_request
+        state: "..."
+    - text_sensor.template.publish:
+        id: text_response
+        state: "..."
+        
+  on_stt_vad_end:
+    #- lvgl.spinner.update:
+    #    id:          lvgl_spinner_voice
+    #    indicator:
+    #      arc_color: 0xFF8000
+    - lvgl.obj.update:
+        id:           lvgl_round_voice
+        shadow_color: 0xFF8000
+    - lvgl.label.update:
+        id:    lvgl_text_voice
+        text: "\U000F07F6 THINKING"
+          
+  on_stt_end:
+    - text_sensor.template.publish:
+        id: text_request
+        state: !lambda return x;
+        
+  on_tts_start:
+    - text_sensor.template.publish:
+        id: text_response
+        state: !lambda return x;
+    #- lvgl.spinner.update:
+    #    id:          lvgl_spinner_voice
+    #    indicator:
+    #      arc_color: 0x008000
+    - lvgl.obj.update:
+        id:           lvgl_round_voice
+        shadow_color: 0x008000
+    - lvgl.label.update:
+        id:    lvgl_text_voice
+        text: "\U000F057E REPLYING"
+
+  on_tts_end:
+    #- lvgl.spinner.update:
+    #    id:          lvgl_spinner_voice
+    #    indicator:
+    #      arc_color: 0xd4d4d4
+    - delay: 3s
+    - lvgl.obj.update:
+        id:           lvgl_round_voice
+        shadow_color: 0xd4d4d4
+    - lvgl.label.update:
+        id:    lvgl_text_voice
+        text: "\U000F043B IDLE"
+
+  #on_tts_stream_start:
+  #  - lvgl.spinner.update:
+  #      id:          lvgl_spinner_voice
+  #      indicator:
+  #        arc_color: 0x008000
+  #  - lvgl.label.update:
+  #      id:    lvgl_temp_setup_acliving
+  #      text:
+  #        format: "\U000F057E REPLYING"
+  #        
+  #on_tts_stream_end:
+  #  - lvgl.spinner.update:
+  #      id:          lvgl_spinner_voice
+  #      indicator:
+  #        arc_color: 0xd4d4d4
+  #  - lvgl.label.update:
+  #      id:    lvgl_temp_setup_acliving
+  #      text:
+  #        format: "\U000F043B IDLE"
+
+  on_error:
+    - micro_wake_word.start:  
+    #- lvgl.spinner.update:
+    #    id:          lvgl_spinner_voice
+    #    indicator:
+    #      arc_color: 0xFF0000
+    - lvgl.obj.update:
+        id:           lvgl_round_voice
+        shadow_color: 0xFF0000
+    - lvgl.label.update:
+        id:    lvgl_text_voice
+        text: "\U000F0028 ERROR"
+         
+  on_end:
+    - wait_until:
+        not:
+          voice_assistant.is_running:
+    - micro_wake_word.start:
+    
+  on_client_connected:
+    - delay: 10s
+    - micro_wake_word.start:
+  on_client_disconnected:
+    - voice_assistant.stop:
+
+#-------------------------------------------
+# SCRIPTS
+#-------------------------------------------
+script:
+  - id: play_sound
+    parameters:
+      priority: bool
+      sound_file: "media_player::MediaFile*"
+    then:
+      - lambda: |-
+          if (priority) {
+            id(speaker_media_player)
+              ->make_call()
+              .set_command(media_player::MediaPlayerCommand::MEDIA_PLAYER_COMMAND_STOP)
+              .set_announcement(true)
+              .perform();
+          }
+          if ( (id(speaker_media_player).state != media_player::MediaPlayerState::MEDIA_PLAYER_STATE_ANNOUNCING ) || priority) {
+            id(speaker_media_player)
+              ->make_call()
+              .set_announcement(true)
+              .set_local_media_file(sound_file)
+              .perform();
+          }
+
+ #-------------------------------------------
+ # DISPLAY BRIGHTNESS VS AMBIENT LIGHT
+ #-------------------------------------------
+ # Thanks: https://www.speaktothegeek.co.uk/2023/01/esphome-fan-v3-variable-speed-pwm-and-temperature-control/
+  - id: set_display_brightness
+    mode: restart
+    then:
+      if:
+        condition:
+          not:
+            lvgl.is_paused:
+        then:
+          - light.turn_on:
+              id: display_backlight
+              brightness: !lambda |-
+                if (isnan(id(ambient_light).state)) {
+                  return 0.5;
+                }
+                else if (id(ambient_light).state >= ${ambient_threshold_high}) {
+                  return 1;
+                }
+                else {
+                  float calc_brightness = ((1.0 - ${minimum_display_brightness}) / (${ambient_threshold_high} - ${ambient_threshold_low})) * (id(ambient_light).state - ${ambient_threshold_low}) + ${minimum_display_brightness};
+                  return calc_brightness;
+                }
+                ESP_LOGI("script", "UPDATING BRIGHTNESS DISPLAY");
+              transition_length: 0.5s
+          - logger.log:
+              format: "UPDATING BRIGHTNESS DISPLAY"
+              level: info
+          
+#-------------------------------------------
+# SENSORS
+#-------------------------------------------
+sensor:
+  #-------------------------------------------
+  # BH1750 GY-302 lux meter
+  #------------------------------------------- 
+  - platform:        bh1750
+    name:           "${friendly_name} Illuminance"
+    id:              ambient_light
+    address:         0x23
+    update_interval: 10s
+    on_value:
+      - script.execute: set_display_brightness
+      
+  #-------------------------------------------
+  # SM300D2
+  #------------------------------------------- 
+  - platform:        sm300d2
+    id:              sm300d2_aiq
+    update_interval: 20s
+    temperature:
+      name:         "${friendly_name} Temperature"
+      id:            aiq_temperature
+      filters:
+        offset: -5.0
+      on_value:
+        - lvgl.label.update:
+            id: lvgl_aiq_temp
+            text:
+              format: "%.1f"
+              args: [ 'x' ]
+        - lvgl.label.update:
+            id: lvgl_aiq_pm
+            text: !lambda |-
+              char buffer[16];
+              snprintf(buffer, sizeof(buffer), "%.0f/%.0f", id(aiq_pm2_5).state, id(aiq_pm10).state);
+              return std::string(buffer);
+        - lvgl.obj.update:
+            id: lvgl_obj_pm
+            hidden: false
+    humidity:
+      name: "${friendly_name} Humidity"
+      id:    aiq_humidity
+      filters:
+        offset: 15.0
+      accuracy_decimals: 1
+      on_value:
+        - lvgl.label.update:
+            id: lvgl_aiq_humi
+            text:
+              format: "%.0f%%"
+              args: [ 'x' ]
+    co2:
+      name: "${friendly_name} CO2"
+      id:    aiq_co2
+      on_value:
+        # value
+        - lvgl.label.update:
+            id: lvgl_aiq_co2
+            text:
+              format: "%.0f"
+              args: [ 'x' ]
+        # object show   
+        - lvgl.obj.update:
+            id: lvgl_obj_eco2
+            hidden: false
+        - component.update: aqi_climate
+        - component.update: aqi_voc
+        - delay: 50ms
+        - component.update: aqi_final
+    tvoc:
+      name: "${friendly_name} TVOC"
+      id: aiq_tvoc
+      on_value:
+        # value
+        - lvgl.label.update:
+            id: lvgl_aiq_tvoc
+            text:
+              format: "%.0f"
+              args: [ 'x' ]
+        # object show   
+        - lvgl.obj.update:
+            id: lvgl_obj_tvoc
+            hidden: false
+    pm_2_5:
+      name: "${friendly_name} PM2.5"
+      id:    aiq_pm2_5
+    pm_10_0:
+      name: "${friendly_name} PM10"
+      id:    aiq_pm10
+    formaldehyde:
+      name: "${friendly_name} Formaldehyde"
+      id: aiq_ch2o
+      on_value:
+        # value
+        - lvgl.label.update:
+            id: lvgl_aiq_ch2o
+            text:
+              format: "%.0f"
+              args: [ 'x' ]
+        # object show   
+        - lvgl.obj.update:
+            id: lvgl_obj_ch2o
+            hidden: false
+
+  #-------------------------------------------
+  # Air Quality Index
+  #------------------------------------------- 
+  # gases and particulare
+  - platform: template
+    name: "${friendly_name} AQI VOC"
+    id: aqi_voc
+    internal: true
+    accuracy_decimals: 0
+    update_interval: never
+    lambda: |-
+      float pm25 = id(aiq_pm2_5).state;
+      float pm10 = id(aiq_pm10).state;
+      float co2 = id(aiq_co2).state;
+      float tvoc = id(aiq_tvoc).state;
+      float ch2o = id(aiq_ch2o).state;
+      
+      // Function to calculate AQI for each pollutant
+      auto calculate_aqi = [](float conc, float BP_Lo, float BP_Hi, int I_Lo, int I_Hi) {
+        return ((I_Hi - I_Lo) / (BP_Hi - BP_Lo)) * (conc - BP_Lo) + I_Lo;
+      };
+      // PM2.5 AQI
+      float aqi_pm25 = (pm25 <= 20)   ? calculate_aqi(pm25,    0,   20,   0, 100) :
+                       (pm25 <= 50)   ? calculate_aqi(pm25,   20,   50, 101, 200) :
+                       (pm25 <= 90)   ? calculate_aqi(pm25,   50,   90, 201, 300) :
+                       (pm25 <= 140)  ? calculate_aqi(pm25,   90,  140, 301, 400) :
+                                        calculate_aqi(pm25,  140,  200, 401, 500);
+      // PM10 AQI                     
+      float aqi_pm10 = (pm10 <= 30)   ? calculate_aqi(pm10,    0,   30,   0, 100) :
+                       (pm10 <= 75)   ? calculate_aqi(pm10,   30,   75, 101, 200) :
+                       (pm10 <= 125)  ? calculate_aqi(pm10,   75,  125, 201, 300) :
+                       (pm10 <= 200)  ? calculate_aqi(pm10,  125,  200, 301, 400) :
+                                        calculate_aqi(pm10,  200,  300, 401, 500);
+      // CO2 AQI
+      float aqi_co2 = (co2 <= 599)    ? calculate_aqi(co2,   400,  599,   0, 100) :
+                      (co2 <= 999)    ? calculate_aqi(co2,   600,  999, 101, 200) :
+                      (co2 <= 1499)   ? calculate_aqi(co2,  1000, 1499, 201, 300) :
+                      (co2 <= 2499)   ? calculate_aqi(co2,  1500, 2499, 301, 400) :
+                                        calculate_aqi(co2,  2500, 5000, 401, 500);
+      // TVOC AQI
+      float aqi_tvoc = (tvoc <= 199)  ? calculate_aqi(tvoc,    1,  199,   0, 100) :
+                       (tvoc <= 660)  ? calculate_aqi(tvoc,  200,  660, 101, 200) :
+                       (tvoc <= 1100) ? calculate_aqi(tvoc,  661, 1100, 201, 300) :
+                       (tvoc <= 1651) ? calculate_aqi(tvoc, 1101, 1651, 301, 400) :
+                                        calculate_aqi(tvoc, 1651, 2000, 401, 500);
+      // CH2O AQI (Formaldehyde)
+      float aqi_ch2o = (ch2o <= 50)   ? calculate_aqi(ch2o,    0,   50,   0, 100) :
+                       (ch2o <= 150)  ? calculate_aqi(ch2o,   51,  150, 101, 200) :
+                       (ch2o <= 300)  ? calculate_aqi(ch2o,  151,  300, 201, 300) :
+                       (ch2o <= 500)  ? calculate_aqi(ch2o,  301,  500, 301, 400) :
+                                        calculate_aqi(ch2o,  501, 1000, 401, 500);
+      
+      // The final AIQ is the highest value from all pollutants
+      return fmax(fmax(fmax(fmax(aqi_pm25, aqi_pm10), fmax(aqi_co2, aqi_tvoc)), aqi_ch2o), 0);
+      
+  # Temperature and Humidity
+  - platform: template
+    name: "${friendly_name} AQI Climate"
+    id: aqi_climate
+    internal: true
+    accuracy_decimals: 0
+    update_interval: never 
+    lambda: |-
+        float temperature = id(aiq_temperature).state;
+        float humidity = id(aiq_humidity).state;
+        
+        // Tabuľka AQI podľa teploty a vlhkosti
+        const float aqi_table[9][14] = {
+          {500, 400, 300, 200, 200, 200, 200, 300, 400, 400, 500, 500, 500, 500},  // 90%
+          {400, 300, 100, 100, 100, 100, 100, 200, 300, 400, 400, 400, 500,   0},  // 80%
+          {400, 300, 200, 100,   0,   0,   0, 100, 200, 300, 400, 400, 500,   0},  // 70%
+          {400, 300, 200, 100,   0,   0,   0,  50, 100, 200, 300, 400, 500,   0},  // 60%
+          {400, 300, 200, 100,   0,   0,   0,   0,  50, 100, 300, 400, 500,   0},  // 50%
+          {500, 400, 400, 300, 200, 150, 150, 100, 100, 200, 300, 400, 500,   0},  // 40%
+          {500, 400, 400, 300, 300, 300, 300, 300, 300, 300, 300, 400, 500,   0},  // 30%
+          {500, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 500,   0},  // 20%
+          {500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,   0}   // 10%
+          //16   17   18   19   20   21   22   23   24   25   26   27   28
+        };
+         
+        // Vyhľadanie AQI hodnoty na základe vlhkosti
+        int humidity_index = 0;
+        if (humidity >= 90) humidity_index = 0;
+        else if (humidity >= 80) humidity_index = 1;
+        else if (humidity >= 70) humidity_index = 2;
+        else if (humidity >= 60) humidity_index = 3;
+        else if (humidity >= 50) humidity_index = 4;
+        else if (humidity >= 40) humidity_index = 5;
+        else if (humidity >= 30) humidity_index = 6;
+        else if (humidity >= 20) humidity_index = 7;
+        else humidity_index = 8;
+        
+        // Určenie AQI na základe teploty
+        int temp_index = 0;
+        if (temperature >= 28) temp_index = 13;
+        else if (temperature >= 27) temp_index = 12;
+        else if (temperature >= 26) temp_index = 11;
+        else if (temperature >= 25) temp_index = 10;
+        else if (temperature >= 24) temp_index = 9;
+        else if (temperature >= 23) temp_index = 8;
+        else if (temperature >= 22) temp_index = 7;
+        else if (temperature >= 21) temp_index = 6;
+        else if (temperature >= 20) temp_index = 5;
+        else if (temperature >= 19) temp_index = 4;
+        else if (temperature >= 18) temp_index = 3;
+        else if (temperature >= 17) temp_index = 2;
+        else if (temperature >= 16) temp_index = 1;
+        else temp_index = 0;
+        
+        // Lineárna interpolácia medzi teplotami
+        float ratio = (temperature - (15 + temp_index)) / (16 + temp_index - (15 + temp_index));
+        
+        // Výpočet interpolovanej hodnoty AQI
+        float interpolated_aqi = aqi_table[humidity_index][temp_index] + ratio * (aqi_table[humidity_index][temp_index + 1] - aqi_table[humidity_index][temp_index]);
+        
+        return interpolated_aqi;
+        
+  # Final Air Quality Index
+  - platform:             template
+    name:                "${friendly_name} AQI"
+    update_interval:      never
+    unit_of_measurement:  AQI
+    id:                   aqi_final
+    accuracy_decimals:    0
+    lambda: |-
+      //float aqi_voc = id(aqi_voc).state;
+      //float aqi_climate = id(aqi_climate).state;
+      
+      // Vráť maximum z dvoch hodnôt
+      return fmax(id(aqi_voc).state, id(aqi_climate).state);
+    on_value:
+      if:
+        condition:
+          sensor.in_range:
+            id: aqi_final
+            above: 0.0
+        then:
+          - lvgl.indicator.update:
+              id:     lvgl_aqi_needle
+              opa:    100%
+          - lvgl.indicator.update:
+              id:    lvgl_aqi_needle
+              value: !lambda return x / 10;
+        else:
+          - lvgl.indicator.update:
+              id:     lvgl_aqi_needle
+              opa:    0%
+            
+  #-------------------------------------------
+  # Mermory size free
+  #-------------------------------------------     
+  #- platform: template
+  #  name: ${friendly_name} Free Mem Size
+  #  entity_category: diagnostic
+  #  unit_of_measurement: kb
+  #  accuracy_decimals: 0
+  #  lambda: |-
+  #    size_t freeValue = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
+  #    return freeValue / 1024.0;
+  #  update_interval: 30s
+
+  #- platform: template
+  #  name: "PSRAM Free"
+  #  unit_of_measurement: "kb"
+  #  accuracy_decimals: 0
+  #  update_interval: 10s
+  #  entity_category: diagnostic
+  #  lambda: |-
+  #    return heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024.0;
+
+  - platform: template
+    name: "Internal RAM Free"
+    unit_of_measurement: "kb"
+    accuracy_decimals: 0
+    update_interval: 10s
+    entity_category: diagnostic
+    lambda: |-
+      return heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024.0;
+      
+  #-------------------------------------------
+  # Dimmer lights
+  #-------------------------------------------
+  # Media center
+  - platform: homeassistant
+    id: dimmermediacenter
+    entity_id: $light_mediacenter
+    attribute: brightness
+    on_value:
+      - lvgl.slider.update:
+          id: dimmer_mediacenter
+          value: !lambda return x;
+
+  # Living room lights
+  - platform: homeassistant
+    id: dimmerlivingroom
+    entity_id: $light_livingroom
+    attribute: brightness
+    on_value:
+      - lvgl.slider.update:
+          id: dimmer_livingroom
+          value: !lambda return x;
+          
+  #-------------------------------------------
+  # Climate
+  #-------------------------------------------
+  # Thermostat temperature
+  - platform: homeassistant
+    id: climatethermostat
+    entity_id: $climate_thermostat
+    attribute: temperature
+    on_value:
+      - lvgl.label.update:
+          id:    lvgl_temp_setup_termostat
+          text:
+            format: "%.1f"
+            args: [ 'x' ]
+            
+  # AC Living room
+  - platform: homeassistant
+    id: climateacliving
+    entity_id: $climate_aclivingroom
+    attribute: temperature
+    on_value:
+      - lvgl.label.update:
+          id:    lvgl_temp_setup_acliving
+          text:
+            format: "%.1f"
+            args: [ 'x' ]
+
+  # AC Atelier
+  - platform: homeassistant
+    id: climateacatelier
+    entity_id: $climate_acatelier
+    attribute: temperature
+    on_value:
+      - lvgl.label.update:
+          id:    lvgl_temp_setup_acatelier
+          text:
+            format: "%.1f"
+            args: [ 'x' ]
+
+#-------------------------------------------
+# SWITCHES
+#-------------------------------------------
+#switch:
+#  - platform: template
+#    name: "${friendly_name} Voice Assistant"
+#    id: use_wake_word
+#    optimistic: true
+#    restore_mode: RESTORE_DEFAULT_ON
+#    entity_category: config
+#    on_turn_on:
+#      - lambda: id(voice_assist).set_use_wake_word(true);
+#      - if:
+#          condition:
+#            not:
+#              - voice_assistant.is_running
+#          then:
+#            - voice_assistant.start_continuous
+#    on_turn_off:
+#      - voice_assistant.stop
+#      - lambda: id(voice_assist).set_use_wake_word(false);
+      
+#-------------------------------------------
+# BINARY SENSORS
+#-------------------------------------------
+binary_sensor:
+#-------------------------------------------
+# GT911 touchscreen sensor
+#-------------------------------------------
+  - platform: gt911
+    name: "Home"
+    index: 0
+    
+#-------------------------------------------
+# Online status
+#-------------------------------------------
+  - platform: status
+    name: "${friendly_name} Status"
+    id: status_online
+    entity_category: diagnostic
+    icon: mdi:ethernet
+    on_state:
+      if:
+        condition:
+          binary_sensor.is_off: status_online
+        then:
+          - lvgl.widget.hide: lvgl_online_status
+        else:
+          - lvgl.widget.show: lvgl_online_status
+
+#-------------------------------------------
+# CircuitBreaker
+#-------------------------------------------
+  # Bedroom
+  - platform:               homeassistant
+    id:                     circuitbedroom
+    entity_id:              $circuit_bedroom
+    publish_initial_state:  true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id:               lvgl_button_bedroom
+          state:
+            checked:        !lambda return x;
+
+  # Kitchen
+  - platform:               homeassistant
+    id:                     circuitkitchen
+    entity_id:              $circuit_kitchen
+    publish_initial_state:  true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id:               lvgl_button_kitchen
+          state:
+            checked:        !lambda return x;
+
+  # Bathroom
+  - platform:               homeassistant
+    id:                     circuitbathroom
+    entity_id:              $circuit_bathroom
+    publish_initial_state:  true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id:               lvgl_button_bathroom
+          state:
+            checked:        !lambda return x;
+
+  # Living room
+  - platform:               homeassistant
+    id:                     circuitlivingroom
+    entity_id:              $circuit_livingroom
+    publish_initial_state:  true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id:               lvgl_button_livingroom
+          state:
+            checked:        !lambda return x;
+
+  # Exterior
+  - platform:               homeassistant
+    id:                     circuitexterior
+    entity_id:              $circuit_exterior
+    publish_initial_state:  true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id:               lvgl_button_exterior
+          state:
+            checked:        !lambda return x;
+
+  # Cellar
+  - platform:               homeassistant
+    id:                     circuitcellar
+    entity_id:              $circuit_cellar
+    publish_initial_state:  true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id:               lvgl_button_cellar
+          state:
+            checked:        !lambda return x;
+
+  # Atelier
+  - platform:               homeassistant
+    id:                     circuitatelier
+    entity_id:              $circuit_atelier
+    publish_initial_state:  true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id:               lvgl_button_atelier
+          state:
+            checked:        !lambda return x;
+
+#-------------------------------------------
+# Switches
+#-------------------------------------------
+  #-------------------------------------------
+  # Media Center
+  #-------------------------------------------
+  - platform:               homeassistant
+    id:                     mediacenter
+    entity_id:              $switch_mediacenter
+    publish_initial_state:  true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id:               lvgl_button_mediacenter
+          state:
+            checked:        !lambda return x;
+
+  #-------------------------------------------
+  # Pool Filter
+  #-------------------------------------------
+  - platform:               homeassistant
+    id:                     poolfilter
+    entity_id:              $switch_poolfilter
+    publish_initial_state:  true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id:               lvgl_button_poolfilter
+          state:
+            checked:        !lambda return x;
+
+  #-------------------------------------------
+  # Watering
+  #-------------------------------------------
+  - platform:               homeassistant
+    id:                     watering
+    entity_id:              $switch_watering
+    publish_initial_state:  true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id:               lvgl_button_watering
+          state:
+            checked:        !lambda return x;
+
+#-------------------------------------------
+# Lights
+#-------------------------------------------
+  # Living room
+  - platform:               homeassistant
+    id:                     lightlivingroom
+    entity_id:              $light_livingroom
+    publish_initial_state:  true
+    on_state:
+      then:
+        - lvgl.widget.update:
+            id:               lvgl_light_livingroom
+            state:
+              checked:        !lambda return x;
+        - if:
+            condition: 
+              binary_sensor.is_on: lightmediacenter
+            then:
+              lvgl.widget.show: lvgl_dimmer_livingroom
+            else:
+              lvgl.widget.hide: lvgl_dimmer_livingroom
+
+
+  #-------------------------------------------
+  # Media center
+  #-------------------------------------------
+  - platform:               homeassistant
+    id:                     lightmediacenter
+    entity_id:              $light_mediacenter
+    publish_initial_state:  true
+    on_state:
+      then:
+        - lvgl.widget.update:
+            id:               lvgl_light_mediacenter
+            state:
+              checked:        !lambda return x;
+        - if:
+            condition: 
+              binary_sensor.is_on: lightmediacenter
+            then:
+              lvgl.widget.show: lvgl_dimmer_mediacenter
+            else:
+              lvgl.widget.hide: lvgl_dimmer_mediacenter
+
+  #-------------------------------------------
+  # Kitchen
+  #-------------------------------------------
+  - platform:               homeassistant
+    id:                     lightkitchensink
+    entity_id:              $light_kitchensink
+    publish_initial_state:  true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id:               lvgl_light_kitchensink
+          state:
+            checked:        !lambda return x;
+
+  #-------------------------------------------
+  # Bar
+  #-------------------------------------------
+  - platform:               homeassistant
+    id:                     lightbar
+    entity_id:              $light_bar
+    publish_initial_state:  true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id:               lvgl_light_bar
+          state:
+            checked:        !lambda return x;
+
+  # Hall
+  - platform:               homeassistant
+    id:                     lighthall
+    entity_id:              $light_hall
+    publish_initial_state:  true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id:               lvgl_light_hall
+          state:
+            checked:        !lambda return x;
+
+
+#-------------------------------------------
+# VALVES
+#-------------------------------------------
+  # Valve 1 Bathroom
+  - platform:               homeassistant
+    id:                     valve1
+    entity_id:              $valve_1_temp
+    publish_initial_state:  true
+    on_state:
+      then:
+        - lvgl.switch.update:
+            id:               lvgl_valve1
+            state:
+              checked:        !lambda return x;
+        - logger.log: LOAD VALVES
+            
+  # Valve 2 Living room
+  - platform:               homeassistant
+    id:                     valve2
+    entity_id:              $valve_2_temp
+    publish_initial_state:  true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id:               lvgl_valve2
+          state:
+            checked:        !lambda return x;
+            
+  # Valve 3 Kids room
+  - platform:               homeassistant
+    id:                     valve3
+    entity_id:              $valve_3_temp
+    publish_initial_state:  true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id:               lvgl_valve3
+          state:
+            checked:        !lambda return x;
+            
+  # Valve 4 Bedroom
+  - platform:               homeassistant
+    id:                     valve4
+    entity_id:              $valve_4_temp
+    publish_initial_state:  true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id:               lvgl_valve4
+          state:
+            checked:        !lambda return x;
+            
+  # Valve 5 Floor
+  - platform:               homeassistant
+    id:                     valve5
+    entity_id:              $valve_5_temp
+    publish_initial_state:  true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id:               lvgl_valve5
+          state:
+            checked:        !lambda return x;
+            
+  # Valve 6 Workroom
+  - platform:               homeassistant
+    id:                     valve6
+    entity_id:              $valve_6_temp
+    publish_initial_state:  true
+    on_state:
+      then:
+        lvgl.widget.update:
+          id:               lvgl_valve6
+          state:
+            checked:        !lambda return x;
+            
+  # Valve Automation
+  - platform:               homeassistant
+    id:                     valveauto
+    entity_id:              $valve_auto
+    publish_initial_state:  true
+    on_state:
+      then:
+        lvgl.checkbox.update:
+          id:               checkbox_valves_auto
+          state:
+            checked:        !lambda return id(valveauto).state;
+            
+#-------------------------------------------
+# OUTPUTS
+#-------------------------------------------
+select:
+#-------------------------------------------
+# OUTPUTS
+#-------------------------------------------
+output:
+  - platform: ledc
+    pin: $display_led_pin
+    id: backlight
+    frequency: 100Hz
+
+#-------------------------------------------
+# LIGHTS
+#-------------------------------------------
+light:
+  - platform: monochromatic
+    output: backlight
+    name: Display Backlight
+    id: display_backlight
+    restore_mode: ALWAYS_ON
+
+#-------------------------------------------
+# TEXT SENSORS
+#-------------------------------------------
+text_sensor:
+  #-------------------------------------------
+  # VOICE ASSISTANT
+  #-------------------------------------------
+  - id: text_request
+    platform: template
+    on_value:
+      lambda: |-
+        if(id(text_request).state.length()>32) {
+          std::string name = id(text_request).state.c_str();
+          std::string truncated = esphome::str_truncate(name.c_str(),31);
+          id(text_request).state = (truncated+"...").c_str();
+        }
+
+  - id: text_response
+    platform: template
+    on_value:
+      lambda: |-
+        if(id(text_response).state.length()>32) {
+          std::string name = id(text_response).state.c_str();
+          std::string truncated = esphome::str_truncate(name.c_str(),31);
+          id(text_response).state = (truncated+"...").c_str();
+        }
+        
+  #-------------------------------------------
+  # CLIMATE
+  #-------------------------------------------
+  # Thermostat HVAC
+  - platform: homeassistant
+    id: climatethermostat_hvac
+    entity_id: $climate_thermostat
+    #attribute: temperature
+    on_value:
+      - if: 
+          condition:
+            lambda: 'return id(climatethermostat_hvac).state == "off";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_thermostat_mode
+                selected_index: 0
+                bg_color:      0xFFFFFF
+                text_color:    0x000000
+                dropdown_list:
+                  selected:
+                    checked:
+                      bg_color:   0xFFFFFF
+                      text_color: 0x000000
+      - if: 
+          condition:
+            lambda: 'return id(climatethermostat_hvac).state == "heat";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_thermostat_mode
+                selected_index: 1
+                bg_color:      0xFF8000
+                text_color:    0xFFFFFF
+                dropdown_list:
+                  selected:
+                    checked:
+                      bg_color: 0xFF8000
+      - if: 
+          condition:
+            lambda: 'return id(climatethermostat_hvac).state == "auto";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_thermostat_mode
+                selected_index: 2
+                bg_color:      0x008000
+                text_color:    0xFFFFFF
+                dropdown_list:
+                  selected:
+                    checked:
+                      bg_color: 0x008000
+
+  # Thermostat PRESET
+  - platform: homeassistant
+    id: climatethermostat_preset
+    entity_id: $climate_thermostat
+    #attribute: temperature
+    on_value:
+      - if: 
+          condition:
+            lambda: 'return id(climatethermostat_preset).state == "none";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_thermostat_preset
+                selected_index: 0
+      - if: 
+          condition:
+            lambda: 'return id(climatethermostat_preset).state == "eco";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_thermostat_preset
+                selected_index: 1
+
+  # Thermostat - Sensor states
+  - platform: homeassistant
+    internal: true
+    id: thermostatsensor
+    entity_id: $thermostat_sensor
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lvgl_temp_current_termostat
+            text: !lambda |-
+              std::string sensor = id(thermostatsensor).state;
+              char delim = '#';
+              size_t pos = sensor.find(delim);
+              std::string first_value = sensor.substr(0, pos);
+              return first_value;
+
+        - lvgl.label.update:
+            id: lvgl_state_termostat
+            text: !lambda |-
+              std::string sensor = id(thermostatsensor).state;
+              char delim = '#';
+              size_t pos = sensor.find(delim);
+              std::string second_value = sensor.substr(pos + 1, sensor.find(delim, pos + 1) - pos - 1);
+              return second_value;
+
+        - lvgl.label.update:
+            id: lvgl_power_termostat
+            text: !lambda |-
+              std::string sensor = id(thermostatsensor).state;
+              char delim = '#';
+              size_t firstPos = sensor.find(delim);
+              size_t secondPos = sensor.find(delim, firstPos + 1);
+              std::string third_value = sensor.substr(secondPos + 1);
+              return third_value + " W";
+
+  # AC Living room HVAC
+  - platform: homeassistant
+    id: climateacliving_hvac
+    entity_id: $climate_aclivingroom
+    #attribute: temperature
+    on_value:
+      - if: 
+          condition:
+            lambda: 'return id(climateacliving_hvac).state == "off";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acliving_mode
+                selected_index: 0
+                bg_color:      0xFFFFFF
+                text_color:    0x000000
+                dropdown_list:
+                  selected:
+                    checked:
+                      bg_color:   0xFFFFFF
+                      text_color: 0x000000
+      - if: 
+          condition:
+            lambda: 'return id(climateacliving_hvac).state == "heat";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acliving_mode
+                selected_index: 1
+                bg_color:      0xFF8000
+                text_color:    0xFFFFFF
+                dropdown_list:
+                  selected:
+                    checked:
+                      bg_color: 0xFF8000
+      - if: 
+          condition:
+            lambda: 'return id(climateacliving_hvac).state == "cool";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acliving_mode
+                selected_index: 2
+                bg_color:      0x1a97f6
+                text_color:    0xFFFFFF
+                dropdown_list:
+                  selected:
+                    checked:
+                      bg_color: 0x1a97f6
+      - if: 
+          condition:
+            lambda: 'return id(climateacliving_hvac).state == "auto";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acliving_mode
+                selected_index: 3
+                bg_color:      0x008000
+                text_color:    0xFFFFFF
+                dropdown_list:
+                  selected:
+                    checked:
+                      bg_color: 0x008000
+      - if: 
+          condition:
+            lambda: 'return id(climateacliving_hvac).state == "Dry";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acliving_mode
+                selected_index: 4
+                bg_color:      0xefbd07
+                text_color:    0xFFFFFF
+                dropdown_list:
+                  selected:
+                    checked:
+                      bg_color: 0xefbd07
+      - if: 
+          condition:
+            lambda: 'return id(climateacliving_hvac).state == "fan_only";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acliving_mode
+                selected_index: 5
+                bg_color:      0x8a8a8a
+                text_color:    0xFFFFFF
+                dropdown_list:
+                  selected:
+                    checked:
+                      bg_color: 0x8a8a8a
+
+  # AC Living room PRESET
+  - platform: homeassistant
+    id: climateacliving_preset
+    entity_id: $climate_aclivingroom
+    on_value:
+      - if: 
+          condition:
+            lambda: 'return id(climateacliving_preset).state == "none";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acliving_preset
+                selected_index: 0
+      - if: 
+          condition:
+            lambda: 'return id(climateacliving_preset).state == "eco";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acliving_preset
+                selected_index: 1
+      - if: 
+          condition:
+            lambda: 'return id(climateacliving_preset).state == "away";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acliving_preset
+                selected_index: 2
+      - if: 
+          condition:
+            lambda: 'return id(climateacliving_preset).state == "boost";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acliving_preset
+                selected_index: 3
+      - if: 
+          condition:
+            lambda: 'return id(climateacliving_preset).state == "sleep";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acliving_preset
+                selected_index: 4
+
+  # AC Living room Fan
+  - platform: homeassistant
+    id: climateacliving_fan
+    entity_id: $climate_aclivingroom
+    on_value:
+      - if: 
+          condition:
+            lambda: 'return id(climateacliving_fan).state == "auto";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acliving_fan
+                selected_index: 0
+      - if: 
+          condition:
+            lambda: 'return id(climateacliving_fan).state == "low";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acliving_fan
+                selected_index: 1
+      - if: 
+          condition:
+            lambda: 'return id(climateacliving_fan).state == "medium low";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acliving_fan
+                selected_index: 2
+      - if: 
+          condition:
+            lambda: 'return id(climateacliving_fan).state == "medium";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acliving_fan
+                selected_index: 3
+      - if: 
+          condition:
+            lambda: 'return id(climateacliving_fan).state == "medium high";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acliving_fan
+                selected_index: 4
+      - if: 
+          condition:
+            lambda: 'return id(climateacliving_fan).state == "high";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acliving_fan
+                selected_index: 5
+      #- lambda: if (id(climateacliving_fan).state == "low")         {id(lv_dropdown_acliving_fan).set_selected_index(1);}
+      #- lambda: if (id(climateacliving_fan).state == "medium low")  {id(lv_dropdown_acliving_fan).selected(1);}
+      #- lambda: if (id(climateacliving_fan).state == "medium")      {id(lv_dropdown_acliving_fan).lv_dropdown_set_selected(1);}
+      #- lambda: if (id(climateacliving_fan).state == "medium high") {id(lv_dropdown_acliving_fan).set_options(1);}
+      #- lambda: if (id(climateacliving_fan).state == "high")        {id(lv_dropdown_acliving_fan).set_options(1);}
+
+  # AC Living room - Sensor states
+  - platform: homeassistant
+    internal: true
+    id: aclivingsensor
+    entity_id: $acliving_sensor
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lvgl_temp_current_acliving
+            text: !lambda |-
+              std::string sensor = id(aclivingsensor).state;
+              char delim = '#';
+              size_t pos = sensor.find(delim);
+              std::string first_value = sensor.substr(0, pos);
+              return first_value;
+
+        - lvgl.label.update:
+            id: lvgl_state_acliving
+            text: !lambda |-
+              std::string sensor = id(aclivingsensor).state;
+              char delim = '#';
+              size_t pos = sensor.find(delim);
+              std::string second_value = sensor.substr(pos + 1, sensor.find(delim, pos + 1) - pos - 1);
+              return second_value;
+
+        - lvgl.label.update:
+            id: lvgl_power_acliving
+            text: !lambda |-
+              std::string sensor = id(aclivingsensor).state;
+              char delim = '#';
+              size_t firstPos = sensor.find(delim);
+              size_t secondPos = sensor.find(delim, firstPos + 1);
+              std::string third_value = sensor.substr(secondPos + 1);
+              return third_value + " W";
+
+  # AC Atelier HVAC
+  - platform: homeassistant
+    id: climateacatelier_hvac
+    entity_id: $climate_acatelier
+    #attribute: temperature
+    on_value:
+      - if: 
+          condition:
+            lambda: 'return id(climateacatelier_hvac).state == "off";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acatelier_mode
+                selected_index: 0
+                bg_color:      0xFFFFFF
+                text_color:    0x000000
+                dropdown_list:
+                  selected:
+                    checked:
+                      bg_color:   0xFFFFFF
+                      text_color: 0x000000
+      - if: 
+          condition:
+            lambda: 'return id(climateacatelier_hvac).state == "heat";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acatelier_mode
+                selected_index: 1
+                bg_color:      0xFF8000
+                text_color:    0xFFFFFF
+                dropdown_list:
+                  selected:
+                    checked:
+                      bg_color: 0xFF8000
+      - if: 
+          condition:
+            lambda: 'return id(climateacatelier_hvac).state == "cool";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acatelier_mode
+                selected_index: 2
+                bg_color:      0x1a97f6
+                text_color:    0xFFFFFF
+                dropdown_list:
+                  selected:
+                    checked:
+                      bg_color: 0x1a97f6
+      - if: 
+          condition:
+            lambda: 'return id(climateacatelier_hvac).state == "auto";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acatelier_mode
+                selected_index: 3
+                bg_color:      0x008000
+                text_color:    0xFFFFFF
+                dropdown_list:
+                  selected:
+                    checked:
+                      bg_color: 0x008000
+      - if: 
+          condition:
+            lambda: 'return id(climateacatelier_hvac).state == "Dry";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acatelier_mode
+                selected_index: 4
+                bg_color:      0xefbd07
+                text_color:    0xFFFFFF
+                dropdown_list:
+                  selected:
+                    checked:
+                      bg_color: 0xefbd07
+      - if: 
+          condition:
+            lambda: 'return id(climateacatelier_hvac).state == "fan_only";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acatelier_mode
+                selected_index: 5
+                bg_color:      0x8a8a8a
+                text_color:    0xFFFFFF
+                dropdown_list:
+                  selected:
+                    checked:
+                      bg_color: 0x8a8a8a
+
+  # AC Atelier PRESET
+  - platform: homeassistant
+    id: climateacatelier_preset
+    entity_id: $climate_acatelier
+    on_value:
+      - if: 
+          condition:
+            lambda: 'return id(climateacatelier_preset).state == "none";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acatelier_preset
+                selected_index: 0
+      - if: 
+          condition:
+            lambda: 'return id(climateacatelier_preset).state == "eco";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acatelier_preset
+                selected_index: 1
+      - if: 
+          condition:
+            lambda: 'return id(climateacatelier_preset).state == "away";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acatelier_preset
+                selected_index: 2
+      - if: 
+          condition:
+            lambda: 'return id(climateacatelier_preset).state == "boost";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acatelier_preset
+                selected_index: 3
+      - if: 
+          condition:
+            lambda: 'return id(climateacatelier_preset).state == "sleep";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acatelier_preset
+                selected_index: 4
+
+  # AC Atelier Fan
+  - platform: homeassistant
+    id: climateacatelier_fan
+    entity_id: $climate_acatelier
+    on_value:
+      - if: 
+          condition:
+            lambda: 'return id(climateacatelier_fan).state == "auto";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acatelier_fan
+                selected_index: 0
+      - if: 
+          condition:
+            lambda: 'return id(climateacatelier_fan).state == "low";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acatelier_fan
+                selected_index: 1
+      - if: 
+          condition:
+            lambda: 'return id(climateacatelier_fan).state == "medium low";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acatelier_fan
+                selected_index: 2
+      - if: 
+          condition:
+            lambda: 'return id(climateacatelier_fan).state == "medium";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acatelier_fan
+                selected_index: 3
+      - if: 
+          condition:
+            lambda: 'return id(climateacatelier_fan).state == "medium high";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acatelier_fan
+                selected_index: 4
+      - if: 
+          condition:
+            lambda: 'return id(climateacatelier_fan).state == "high";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_acatelier_fan
+                selected_index: 5
+      #- lambda: if (id(climateacliving_fan).state == "low")         {id(lv_dropdown_acliving_fan).set_selected_index(1);}
+      #- lambda: if (id(climateacliving_fan).state == "medium low")  {id(lv_dropdown_acliving_fan).selected(1);}
+      #- lambda: if (id(climateacliving_fan).state == "medium")      {id(lv_dropdown_acliving_fan).lv_dropdown_set_selected(1);}
+      #- lambda: if (id(climateacliving_fan).state == "medium high") {id(lv_dropdown_acliving_fan).set_options(1);}
+      #- lambda: if (id(climateacliving_fan).state == "high")        {id(lv_dropdown_acliving_fan).set_options(1);}
+
+  # AC Atelier - Sensor states
+  - platform: homeassistant
+    internal: true
+    id: acateliersensor
+    entity_id: $acatelier_sensor
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lvgl_temp_current_acatelier
+            text: !lambda |-
+              std::string sensor = id(acateliersensor).state;
+              char delim = '#';
+              size_t pos = sensor.find(delim);
+              std::string first_value = sensor.substr(0, pos);
+              return first_value;
+
+        - lvgl.label.update:
+            id: lvgl_state_acatelier
+            text: !lambda |-
+              std::string sensor = id(acateliersensor).state;
+              char delim = '#';
+              size_t pos = sensor.find(delim);
+              std::string second_value = sensor.substr(pos + 1, sensor.find(delim, pos + 1) - pos - 1);
+              return second_value;
+
+        - lvgl.label.update:
+            id: lvgl_power_acatelier
+            text: !lambda |-
+              std::string sensor = id(acateliersensor).state;
+              char delim = '#';
+              size_t firstPos = sensor.find(delim);
+              size_t secondPos = sensor.find(delim, firstPos + 1);
+              std::string third_value = sensor.substr(secondPos + 1);
+              return third_value + " W";
+
+  #-------------------------------------------
+  # VACUUM
+  #-------------------------------------------
+  # Vacuum - states
+  - platform: homeassistant
+    internal: true
+    id: vacuumstate
+    entity_id: $vacuumbot
+    
+  # Vacuum - Sensor states
+  - platform: homeassistant
+    internal: true
+    id: vacuumsensor
+    entity_id: $vacuum_sensor
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lv_battery
+            text: !lambda |-
+              std::string sensor = id(vacuumsensor).state;
+              char delim = '#';
+              size_t pos = sensor.find(delim);
+              std::string first_value = sensor.substr(0, pos);
+              return "\U000F0079 " +  first_value + "%";
+
+        - lvgl.label.update:
+            id: lv_state_vacuum
+            text: !lambda |-
+              std::string sensor = id(vacuumsensor).state;
+              char delim = '#';
+              size_t pos = sensor.find(delim);
+              std::string second_value = sensor.substr(pos + 1, sensor.find(delim, pos + 1) - pos - 1);
+              return second_value;
+
+        - lvgl.label.update:
+            id: lv_error_vacuum
+            text: !lambda |-
+              std::string sensor = id(vacuumsensor).state;
+              char delim = '#';
+              size_t firstPos = sensor.find(delim);
+              size_t secondPos = sensor.find(delim, firstPos + 1);
+              std::string third_value = sensor.substr(secondPos + 1);
+              
+              if (third_value == " no_error") {
+                return "";  // Vráti prázdny reťazec, ak je hodnota "no_error"
+              } else {
+                return third_value;  // Inak vráti hodnotu
+              }
+
+  # Vacuum mode
+  - platform: homeassistant
+    id: vacuum_cleaning_mode
+    entity_id: $vacuum_mode
+    on_value:
+      - if: 
+          condition:
+            lambda: 'return id(vacuum_cleaning_mode).state == "sweeping";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_vacuum_mode
+                selected_index: 0
+      - if: 
+          condition:
+            lambda: 'return id(vacuum_cleaning_mode).state == "mopping";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_vacuum_mode
+                selected_index: 1
+      - if: 
+          condition:
+            lambda: 'return id(vacuum_cleaning_mode).state == "sweeping_and_mopping";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_vacuum_mode
+                selected_index: 2
+
+  # Vacuum mode
+  - platform: homeassistant
+    id: vacuum_fan_mode
+    entity_id: $vacuum_fan
+    on_value:
+      - if: 
+          condition:
+            lambda: 'return id(vacuum_fan_mode).state == "quiet";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_vacuum_fan
+                selected_index: 0
+      - if: 
+          condition:
+            lambda: 'return id(vacuum_fan_mode).state == "standard";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_vacuum_fan
+                selected_index: 1
+      - if: 
+          condition:
+            lambda: 'return id(vacuum_fan_mode).state == "strong";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_vacuum_fan
+                selected_index: 2
+      - if: 
+          condition:
+            lambda: 'return id(vacuum_fan_mode).state == "turbo";'
+          then:
+            - lvgl.dropdown.update:
+                id: lv_dropdown_vacuum_fan
+                selected_index: 3
+
+#-------------------------------------------
+# Template - cleaner room selected
+# number room is number name in settings vacuum no number on custom cleaning sequency
+#-------------------------------------------
+  - platform: template
+    name: "${friendly_name} Clenaer room select"
+    id: select_room
+    lambda: |-
+        
+        std::string segment_str = "[";
+        bool first = true;
+
+        //if (id(button1_hall).state      ) { if (!first) segment_str += ","; segment_str += "1"; first = false; }
+        //if (id(button2_corridor).state  ) { if (!first) segment_str += ","; segment_str += "2"; first = false; }
+        //if (id(button3_kitchen).state   ) { if (!first) segment_str += ","; segment_str += "3"; first = false; }
+        //if (id(button4_livingroom).state) { if (!first) segment_str += ","; segment_str += "4"; first = false; }
+        //if (id(button5_bedroom).state   ) { if (!first) segment_str += ","; segment_str += "5"; first = false; }
+        //if (id(button6_bathroom).state  ) { if (!first) segment_str += ","; segment_str += "6"; first = false; }
+        //if (id(button7_kidsroom).state  ) { if (!first) segment_str += ","; segment_str += "7"; first = false; }
+        //if (id(button8_wc).state        ) { if (!first) segment_str += ","; segment_str += "8"; first = false; }
+        if (id(button1_hall).state      ) { if (!first) segment_str += ","; segment_str += "8"; first = false; }
+        if (id(button2_corridor).state  ) { if (!first) segment_str += ","; segment_str += "9"; first = false; }
+        if (id(button3_kitchen).state   ) { if (!first) segment_str += ","; segment_str += "7"; first = false; }
+        if (id(button4_livingroom).state) { if (!first) segment_str += ","; segment_str += "4"; first = false; }
+        if (id(button5_bedroom).state   ) { if (!first) segment_str += ","; segment_str += "1"; first = false; }
+        if (id(button6_bathroom).state  ) { if (!first) segment_str += ","; segment_str += "5"; first = false; }
+        if (id(button7_kidsroom).state  ) { if (!first) segment_str += ","; segment_str += "2"; first = false; }
+        if (id(button8_wc).state        ) { if (!first) segment_str += ","; segment_str += "10"; first = false; }
+
+        segment_str += "]";
+        
+        // Ak nie sú žiadne zapnuté prepínače, nastavíme prázdne pole
+        //if (segment_str == "[]") {
+        if (!id(button1_hall).state &&
+            !id(button2_corridor).state &&
+            !id(button3_kitchen).state &&
+            !id(button4_livingroom).state &&
+            !id(button5_bedroom).state &&
+            !id(button6_bathroom).state &&
+            !id(button7_kidsroom).state &&
+            !id(button8_wc).state) {
+          // Všetky tlačidlá sú unchecked (false)
+          return {"0"};
+        }
+        
+        return segment_str;
+    update_interval: never
+
+
+#-------------------------------------------
+# Template - cleaner room selected
+#-------------------------------------------
+#  - platform: template
+#    name: "${friendly_name} Clenaer room select 1"
+#    lambda: |-
+#      if (id(button_template_vacuum).state) {
+#        return std::string("1");  
+#        
+#      }
+#      // Ak žiadne tlačidlo nie je aktívne, vráti hodnotu "none"
+#      return std::string("none");
+#    update_interval: 1s
+    
+#-------------------------------------------
+# Meteoalarm - import home assistant custom component
+#-------------------------------------------
+  - platform: homeassistant
+    internal: true
+    id: meteoalarm
+    entity_id: $meteoalarm_event
+    attribute: event
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lvgl_meteoalarm
+            text:
+              format: "Meteo Alarm: %s"
+              args: [ 'id(meteoalarm).state.c_str()']
+              
+#-------------------------------------------
+# Breaking News - import home assistant template sensor
+#-------------------------------------------
+  - platform: homeassistant
+    internal: true
+    id: breaking_new
+    entity_id: $breaking_news
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: label_news
+            text:
+              format: "%s."
+              args: [ 'id(breaking_new).state.c_str()']
+
+#-------------------------------------------
+# Calendar meniny - import home assistant template sensor
+#-------------------------------------------
+  - platform: homeassistant
+    internal: true
+    id: calendar_name
+    entity_id: $calendar_nameday
+    attribute: message
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: label_namedays
+            text:
+              format: "%s"
+              args: [ 'id(calendar_name).state.c_str()']
+
+#-------------------------------------------
+# Calendar - import home assistant template sensor
+#-------------------------------------------
+  - platform: homeassistant
+    internal: true
+    id: calendar_tiimsvk
+    entity_id: $calendar_event
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: calendar_waste
+            text: !lambda |-
+              std::string calendar = id(calendar_tiimsvk).state;
+              std::size_t currentTemp, previousTemp = 0;
+              char delimTemp = '#';
+              currentTemp = calendar.find(delimTemp);
+
+              static char date_buf[30];
+              snprintf(date_buf, sizeof(date_buf), "%s", calendar.substr(previousTemp, currentTemp - previousTemp).c_str());
+              return date_buf;
+
+        - lvgl.label.update:
+            id: calendar_event_1
+            text: !lambda |-
+              std::string calendar = id(calendar_tiimsvk).state;
+              std::size_t firstDelim, secondDelim;
+              char delimTemp = '#';
+
+              firstDelim  = calendar.find(delimTemp);
+              secondDelim = calendar.find(delimTemp, firstDelim + 1);
+
+              static char date_buf[40];
+              snprintf(date_buf, sizeof(date_buf), "%s", calendar.substr(firstDelim + 1, secondDelim - firstDelim - 1).c_str());
+              return date_buf;
+              
+#-------------------------------------------
+# Wheater import home assistant sensor
+#-------------------------------------------
+##condition now
+  - platform: homeassistant
+    internal: true
+    id: weather_now
+    entity_id: $weather_condition
+    on_value:
+      then:
+        - lvgl.image.update:
+            id: label_forecast_img
+            hidden: false
+        - lvgl.image.update:
+            id: lvgl_forecast_img
+            hidden: false
+        - delay: 10ms
+              
+        #- lambda: |-
+        #    if      (id(weather_now).state == "partlycloudy") { lv_img_set_src(id(label_forecast_img), "img_partlycloudy");} 
+        #    else if (id(weather_now).state == "sunny")        { lv_img_set_src(id(label_forecast_img), "img_sunny");}
+        #    else if (id(weather_now).state == "rainy")        { lv_img_set_src(id(label_forecast_img), "img_rainy");}
+        #- delay: 1s
+        #- lvgl.widget.redraw:
+            #id: boot_widget
+        #- lvgl.img.update:
+        - if:
+            condition:
+              lambda: 'return id(weather_now).state == "partlycloudy";'
+            then:
+              - lvgl.image.update:
+                  id: label_forecast_img
+                  src: img_partlycloudy
+              - lvgl.image.update:
+                  id: lvgl_forecast_img
+                  src: img_partlycloudy
+        - if:
+            condition:
+              lambda: 'return id(weather_now).state == "sunny";'
+            then:
+              - lvgl.image.update:
+                  id: label_forecast_img
+                  src: img_sunny
+              - lvgl.image.update:
+                  id: lvgl_forecast_img
+                  src: img_sunny
+        - if:
+            condition:
+              lambda: 'return id(weather_now).state == "rainy";'
+            then:
+              - lvgl.image.update:
+                  id: label_forecast_img
+                  src: img_rainy
+              - lvgl.image.update:
+                  id: lvgl_forecast_img
+                  src: img_rainy
+        - if:
+            condition:
+              lambda: 'return id(weather_now).state == "lightning";'
+            then:
+              - lvgl.image.update:
+                  id: label_forecast_img
+                  src: img_lightning
+              - lvgl.image.update:
+                  id: lvgl_forecast_img
+                  src: img_lightning
+        - if:
+            condition:
+              lambda: 'return id(weather_now).state == "lightning-rainy";'
+            then:
+              - lvgl.image.update:
+                  id: label_forecast_img
+                  src: img_lightning_rainy
+              - lvgl.image.update:
+                  id: lvgl_forecast_img
+                  src: img_lightning_rainy
+        - if:
+            condition:
+              lambda: 'return id(weather_now).state == "pouring";'
+            then:
+              - lvgl.image.update:
+                  id: label_forecast_img
+                  src: img_pouring
+              - lvgl.image.update:
+                  id: lvgl_forecast_img
+                  src: img_pouring
+        - if:
+            condition:
+              lambda: 'return id(weather_now).state == "snowy-rainy";'
+            then:
+              - lvgl.image.update:
+                  id: label_forecast_img
+                  src: img_snowy_rainy
+              - lvgl.image.update:
+                  id: lvgl_forecast_img
+                  src: img_snowy_rainy
+        - if:
+            condition:
+              lambda: 'return id(weather_now).state == "snowy";'
+            then:
+              - lvgl.image.update:
+                  id: label_forecast_img
+                  src: img_snowy
+              - lvgl.image.update:
+                  id: lvgl_forecast_img
+                  src: img_snowy
+        - if:
+            condition:
+              lambda: 'return id(weather_now).state == "fog";'
+            then:
+              - lvgl.image.update:
+                  id: label_forecast_img
+                  src: img_fog
+              - lvgl.image.update:
+                  id: lvgl_forecast_img
+                  src: img_fog
+        - if:
+            condition:
+              lambda: 'return id(weather_now).state == "hurricane";'
+            then:
+              - lvgl.image.update:
+                  id: label_forecast_img
+                  src: img_hurricane
+              - lvgl.image.update:
+                  id: lvgl_forecast_img
+                  src: img_hurricane
+        - if:
+            condition:
+              lambda: 'return id(weather_now).state == "rainy";'
+            then:
+              - lvgl.image.update:
+                  id: label_forecast_img
+                  src: img_rainy
+              - lvgl.image.update:
+                  id: lvgl_forecast_img
+                  src: img_rainy
+        - if:
+            condition:
+              lambda: 'return id(weather_now).state == "night-partly-cloudy";'
+            then:
+              - lvgl.image.update:
+                  id: label_forecast_img
+                  src: img_night_partly_cloudy
+              - lvgl.image.update:
+                  id: lvgl_forecast_img
+                  src: img_night_partly_cloudy
+        - if:
+            condition:
+              lambda: 'return id(weather_now).state == "clear-night";'
+            then:
+              - lvgl.image.update:
+                  id: label_forecast_img
+                  src: img_clear_night
+              - lvgl.image.update:
+                  id: lvgl_forecast_img
+                  src: img_clear_night
+        - if:
+            condition:
+              lambda: 'return id(weather_now).state == "cloudy";'
+            then:
+              - lvgl.image.update:
+                  id: label_forecast_img
+                  src: img_cloudy
+              - lvgl.image.update:
+                  id: lvgl_forecast_img
+                  src: img_cloudy
+        - if:
+            condition:
+              lambda: 'return id(weather_now).state == "windy";'
+            then:
+              - lvgl.image.update:
+                  id: label_forecast_img
+                  src: img_windy
+              - lvgl.image.update:
+                  id: lvgl_forecast_img
+                  src: img_windy
+        - if:
+            condition:
+              lambda: 'return id(weather_now).state == "windy-variant";'
+            then:
+              - lvgl.image.update:
+                  id: label_forecast_img
+                  src: img_windy_variant
+              - lvgl.image.update:
+                  id: lvgl_forecast_img
+                  src: img_windy_variant
+        - if:
+            condition:
+              lambda: 'return id(weather_now).state == "hail";'
+            then:
+              - lvgl.image.update:
+                  id: label_forecast_img
+                  src: img_hail
+              - lvgl.image.update:
+                  id: lvgl_forecast_img
+                  src: img_hail
+
+   
+
+#  // do something
+#}
+#        - lambda: |-
+#            if (id(weather_now).state == "partlycloudy") {
+#                img_partycloudy;
+#            }
+#            else {
+#              img_partycloudy;
+#            }
+
+              
+        
+
+  
+        
+
+        
+        
+##condition forecast
+#  - platform: homeassistant
+#    internal: true
+#    id: condition_forecast
+#    entity_id: sensor.openweathermap_forecast_condition
+#-------------------------------------------
+# Five days forecat wheater - import home assistant template sensor
+#-------------------------------------------
+  - platform:  homeassistant
+    internal:  true
+    entity_id: $weather_forecast
+    id:        weatherdays
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lvgl_forecast
+            hidden: false
+        #- lvgl.label.update:
+        #    id: label_forecast_icon
+        #    text: !lambda |-
+        #      static char buf[10];
+        #      //--------------------------------------------------------------------------
+        #      // Map weather states to MDI characters.
+        #      //--------------------------------------------------------------------------
+        #      std::map<std::string, std::string> weather_icon_map
+        #        {
+        #          {"cloudy", "\U000F0590"},
+        #          {"cloudy-alert", "\U000F0F2F"},
+        #          {"cloudy-arrow-right", "\U000F0E6E"},
+        #          {"fog", "\U000F0591"},
+        #          {"hail", "\U000F0592"},
+        #          {"hazy", "\U000F0F30"},
+        #          {"hurricane", "\U000F0898"},
+        #          {"lightning", "\U000F0593"},
+        #          {"lightning-rainy", "\U000F067E"},
+        #          {"night", "\U000F0594"},
+        #          {"clear-night", "\U000F0594"},
+        #          {"night-partly-cloudy", "\U000F0F31"},
+        #          {"partlycloudy", "\U000F0595"},
+        #          {"partly-lightning", "\U000F0F32"},
+        #          {"partly-rainy", "\U000F0F33"},
+        #          {"partly-snowy", "\U000F0F34"},
+        #          {"partly-snowy-rainy", "\U000F0F35"},
+        #          {"pouring", "\U000F0596"},
+        #          {"rainy", "\U000F0597"},
+        #          {"snowy", "\U000F0598"},
+        #          {"snowy-heavy", "\U000F0F36"},
+        #          {"snowy-rainy", "\U000F067F"},
+        #          {"sunny", "\U000F0599"},
+        #          {"sunny-alert", "\U000F0F37"},
+        #          {"sunny-off", "\U000F14E4"},
+        #          {"sunset", "\U000F059A"},
+        #          {"sunset-down", "\U000F059B"},
+        #          {"sunset-up", "\U000F059C"},
+        #          {"tornado", "\U000F0F38"},
+        #          {"windy", "\U000F059D"},
+        #          {"windy-variant", "\U000F059E"},
+        #        };
+        #      snprintf(buf, sizeof(buf), "%s", weather_icon_map[id(weather_now).state.c_str()].c_str());
+        #      return buf;
+        
+        #-------------------------------------------
+        # DAY 1
+        #-------------------------------------------
+        - lvgl.label.update:
+            id: lvgl_name_day1
+            text: !lambda |-
+              std::string weather_temp = id(weatherdays).state;
+              char delimTemp = ';';
+              int pozicia_x = 0; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start, end - start);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s", hodnota.c_str());
+              return date_buf;
+
+        - lvgl.label.update:
+            id: lvgl_icon_day1
+            text: !lambda |-
+              std::string weather_temp = id(weatherdays).state;
+              char delimTemp = ';';
+              int pozicia_x = 1; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+              //std::string icon = icon_prefix + hodnota;
+              
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s", hodnota.c_str());
+              return date_buf;
+
+        - lvgl.label.update:
+            id: lvgl_temp_day1
+            text: !lambda |-
+              std::string weather_temp = id(weatherdays).state;
+              char delimTemp = ';';
+              int pozicia_x = 2; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s°C", hodnota.c_str());
+              return date_buf;
+              
+        - lvgl.label.update:
+            id: lvgl_wind_day1
+            text: !lambda |-
+              std::string weather_temp = id(weatherdays).state;
+              char delimTemp = ';';
+              int pozicia_x = 3; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%skm/h", hodnota.c_str());
+              return date_buf;
+              
+        - lvgl.label.update:
+            id: lvgl_rain_day1
+            text: !lambda |-
+              std::string weather_temp = id(weatherdays).state;
+              char delimTemp = ';';
+              int pozicia_x = 4; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              // Find the position of the slash
+              std::size_t slash_pos = hodnota.find('/');
+
+              // Extract the values before and after the slash
+              std::string rain_value = hodnota.substr(0, slash_pos);
+              std::string percent_value = hodnota.substr(slash_pos + 1);
+
+              static char date_buf[40];
+              snprintf(date_buf, sizeof(date_buf), "%smm %s%%", rain_value.c_str(), percent_value.c_str());
+              return date_buf;
+        
+        #-------------------------------------------
+        # DAY 2
+        #-------------------------------------------
+        - lvgl.label.update:
+            id: lvgl_name_day2
+            text: !lambda |-
+              std::string weather_temp = id(weatherdays).state;
+              char delimTemp = ';';
+              int pozicia_x = 5; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s", hodnota.c_str());
+              return date_buf;
+
+        - lvgl.label.update:
+            id: lvgl_icon_day2
+            text: !lambda |-
+              std::string weather_temp = id(weatherdays).state;
+              char delimTemp = ';';
+              int pozicia_x = 6; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+              //std::string icon = icon_prefix + hodnota;
+              
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s", hodnota.c_str());
+              return date_buf;
+
+        - lvgl.label.update:
+            id: lvgl_temp_day2
+            text: !lambda |-
+              std::string weather_temp = id(weatherdays).state;
+              char delimTemp = ';';
+              int pozicia_x = 7; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s°C", hodnota.c_str());
+              return date_buf;
+              
+        - lvgl.label.update:
+            id: lvgl_wind_day2
+            text: !lambda |-
+              std::string weather_temp = id(weatherdays).state;
+              char delimTemp = ';';
+              int pozicia_x = 8; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%skm/h", hodnota.c_str());
+              return date_buf;
+              
+        - lvgl.label.update:
+            id: lvgl_rain_day2
+            text: !lambda |-
+              std::string weather_temp = id(weatherdays).state;
+              char delimTemp = ';';
+              int pozicia_x = 9; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              // Find the position of the slash
+              std::size_t slash_pos = hodnota.find('/');
+
+              // Extract the values before and after the slash
+              std::string rain_value = hodnota.substr(0, slash_pos);
+              std::string percent_value = hodnota.substr(slash_pos + 1);
+
+              static char date_buf[40];
+              snprintf(date_buf, sizeof(date_buf), "%smm %s%%", rain_value.c_str(), percent_value.c_str());
+              return date_buf;
+        
+        #-------------------------------------------
+        # DAY 3
+        #-------------------------------------------
+        - lvgl.label.update:
+            id: lvgl_name_day3
+            text: !lambda |-
+              std::string weather_temp = id(weatherdays).state;
+              char delimTemp = ';';
+              int pozicia_x = 10; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s", hodnota.c_str());
+              return date_buf;
+
+        - lvgl.label.update:
+            id: lvgl_icon_day3
+            text: !lambda |-
+              std::string weather_temp = id(weatherdays).state;
+              char delimTemp = ';';
+              int pozicia_x = 11; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+              //std::string icon = icon_prefix + hodnota;
+              
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s", hodnota.c_str());
+              return date_buf;
+
+        - lvgl.label.update:
+            id: lvgl_temp_day3
+            text: !lambda |-
+              std::string weather_temp = id(weatherdays).state;
+              char delimTemp = ';';
+              int pozicia_x = 12; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s°C", hodnota.c_str());
+              return date_buf;
+              
+        - lvgl.label.update:
+            id: lvgl_wind_day3
+            text: !lambda |-
+              std::string weather_temp = id(weatherdays).state;
+              char delimTemp = ';';
+              int pozicia_x = 13; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%skm/h", hodnota.c_str());
+              return date_buf;
+              
+        - lvgl.label.update:
+            id: lvgl_rain_day3
+            text: !lambda |-
+              std::string weather_temp = id(weatherdays).state;
+              char delimTemp = ';';
+              int pozicia_x = 14; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              // Find the position of the slash
+              std::size_t slash_pos = hodnota.find('/');
+
+              // Extract the values before and after the slash
+              std::string rain_value = hodnota.substr(0, slash_pos);
+              std::string percent_value = hodnota.substr(slash_pos + 1);
+
+              static char date_buf[40];
+              snprintf(date_buf, sizeof(date_buf), "%smm %s%%", rain_value.c_str(), percent_value.c_str());
+              return date_buf;
+        
+        #-------------------------------------------
+        # DAY 4
+        #-------------------------------------------
+        - lvgl.label.update:
+            id: lvgl_name_day4
+            text: !lambda |-
+              std::string weather_temp = id(weatherdays).state;
+              char delimTemp = ';';
+              int pozicia_x = 15; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s", hodnota.c_str());
+              return date_buf;
+
+        - lvgl.label.update:
+            id: lvgl_icon_day4
+            text: !lambda |-
+              std::string weather_temp = id(weatherdays).state;
+              char delimTemp = ';';
+              int pozicia_x = 16; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+              //std::string icon = icon_prefix + hodnota;
+              
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s", hodnota.c_str());
+              return date_buf;
+
+        - lvgl.label.update:
+            id: lvgl_temp_day4
+            text: !lambda |-
+              std::string weather_temp = id(weatherdays).state;
+              char delimTemp = ';';
+              int pozicia_x = 17; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s°C", hodnota.c_str());
+              return date_buf;
+              
+        - lvgl.label.update:
+            id: lvgl_wind_day4
+            text: !lambda |-
+              std::string weather_temp = id(weatherdays).state;
+              char delimTemp = ';';
+              int pozicia_x = 18; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%skm/h", hodnota.c_str());
+              return date_buf;
+              
+        - lvgl.label.update:
+            id: lvgl_rain_day4
+            text: !lambda |-
+              std::string weather_temp = id(weatherdays).state;
+              char delimTemp = ';';
+              int pozicia_x = 19; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              // Find the position of the slash
+              std::size_t slash_pos = hodnota.find('/');
+
+              // Extract the values before and after the slash
+              std::string rain_value = hodnota.substr(0, slash_pos);
+              std::string percent_value = hodnota.substr(slash_pos + 1);
+
+              static char date_buf[40];
+              snprintf(date_buf, sizeof(date_buf), "%smm %s%%", rain_value.c_str(), percent_value.c_str());
+              return date_buf;
+              
+#-------------------------------------------
+# Five days forecat wheater - import home assistant template sensor
+#-------------------------------------------
+  - platform: homeassistant
+    internal: true
+    entity_id: $weather_station
+    id: weatherstation
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lvgl_boot_weather
+            hidden: false
+        - lvgl.label.update:
+            id: lvgl_boot_calendar
+            hidden: false
+        # boot screen
+        - lvgl.label.update:
+            id: temp_out
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              std::size_t currentTemp, previousTemp = 0;
+              char delimTemp = '#';
+              currentTemp = weather_temp.find(delimTemp);
+
+              static char date_buf[10];
+              snprintf(date_buf, sizeof(date_buf), "%s", weather_temp.substr(previousTemp, currentTemp - previousTemp).c_str());
+              return date_buf;
+        # weather screen
+        - lvgl.label.update:
+            id: lvgl_temp_out
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              std::size_t currentTemp, previousTemp = 0;
+              char delimTemp = '#';
+              currentTemp = weather_temp.find(delimTemp);
+
+              static char date_buf[10];
+              snprintf(date_buf, sizeof(date_buf), "%s", weather_temp.substr(previousTemp, currentTemp - previousTemp).c_str());
+              return date_buf;
+        # aiq screen
+        - lvgl.label.update:
+            id: lvgl_temp_out_aiq
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              std::size_t currentTemp, previousTemp = 0;
+              char delimTemp = '#';
+              currentTemp = weather_temp.find(delimTemp);
+
+              static char date_buf[10];
+              snprintf(date_buf, sizeof(date_buf), "%s", weather_temp.substr(previousTemp, currentTemp - previousTemp).c_str());
+
+              // Prevod char[] na std::string pre správne spojenie
+              std::string date_str(date_buf);
+              return "Outdoor " + date_str + "°C";
+
+        - lvgl.label.update:
+            id: temp_feels
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              std::size_t firstDelim, secondDelim;
+              char delimTemp = '#';
+
+              firstDelim  = weather_temp.find(delimTemp);
+              secondDelim = weather_temp.find(delimTemp, firstDelim + 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "Feels: %s °C", weather_temp.substr(firstDelim + 1, secondDelim - firstDelim - 1).c_str());
+              return date_buf;
+        - lvgl.label.update:
+            id: lvgl_temp_feels
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              std::size_t firstDelim, secondDelim;
+              char delimTemp = '#';
+
+              firstDelim  = weather_temp.find(delimTemp);
+              secondDelim = weather_temp.find(delimTemp, firstDelim + 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s", weather_temp.substr(firstDelim + 1, secondDelim - firstDelim - 1).c_str());
+              return date_buf;
+              
+        # TEMPERATURE MIN MAX
+        - lvgl.label.update:
+            id: temp_minmax
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              std::size_t firstDelim, secondDelim, thirdDelim;
+              char delimTemp = '#';
+
+              firstDelim  = weather_temp.find(delimTemp);
+              secondDelim = weather_temp.find(delimTemp, firstDelim + 1);
+              thirdDelim  = weather_temp.find(delimTemp, secondDelim + 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s°C", weather_temp.substr(secondDelim + 1, thirdDelim - secondDelim - 1).c_str());
+              return date_buf;
+        - lvgl.label.update:
+            id: lvgl_temp_max
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              
+              // Rozdelenie reťazca pomocou '/'
+              std::vector<std::string> castiLomitko;
+              std::size_t start = 0;
+              std::size_t lomitkoPos = weather_temp.find('/');
+              while (lomitkoPos != std::string::npos) {
+                  castiLomitko.push_back(weather_temp.substr(start, lomitkoPos - start));
+                  start = lomitkoPos + 1;
+                  lomitkoPos = weather_temp.find('/', start);
+              }
+              castiLomitko.push_back(weather_temp.substr(start));
+          
+              // Predpokladáme, že je tam len jedno lomítko a zaujíma nás prvá časť
+              std::string prvaCast = castiLomitko[0];
+              
+              // Rozdelenie prvej časti pomocou '#'
+              std::vector<std::string> castiMriezka;
+              start = 0;
+              std::size_t mriezkaPos = prvaCast.find('#');
+              while (mriezkaPos != std::string::npos) {
+                  castiMriezka.push_back(prvaCast.substr(start, mriezkaPos - start));
+                  start = mriezkaPos + 1;
+                  mriezkaPos = prvaCast.find('#', start);
+              }
+              castiMriezka.push_back(prvaCast.substr(start));
+              
+              // Skontrolujeme, či máme aspoň 3 časti oddelené '#'
+              if (castiMriezka.size() < 3) {
+                  return "Neplatný vstup";
+              }
+          
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s", castiMriezka[2].c_str());
+              return date_buf;
+        - lvgl.label.update:
+            id: lvgl_temp_min
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              
+              // Rozdelenie reťazca pomocou '/'
+              std::vector<std::string> castiLomitko;
+              std::size_t start = 0;
+              std::size_t lomitkoPos = weather_temp.find('/');
+              while (lomitkoPos != std::string::npos) {
+                  castiLomitko.push_back(weather_temp.substr(start, lomitkoPos - start));
+                  start = lomitkoPos + 1;
+                  lomitkoPos = weather_temp.find('/', start);
+              }
+              castiLomitko.push_back(weather_temp.substr(start));
+         
+              // Skontrolujeme, či máme aspoň 2 časti oddelené lomítkom
+              if (castiLomitko.size() < 2) {
+                  return "Neplatný vstup";
+              }
+         
+              // Získanie druhej časti (za lomítkom)
+              std::string druhaCast = castiLomitko[1];
+              
+              // Rozdelenie druhej časti pomocou '#'
+              std::vector<std::string> castiMriezka;
+              start = 0;
+              std::size_t mriezkaPos = druhaCast.find('#');
+              while (mriezkaPos != std::string::npos) {
+                  castiMriezka.push_back(druhaCast.substr(start, mriezkaPos - start));
+                  start = mriezkaPos + 1;
+                  mriezkaPos = druhaCast.find('#', start);
+              }
+              castiMriezka.push_back(druhaCast.substr(start));
+         
+              // Skontrolujeme, či máme aspoň jednu časť oddelenú '#'
+              if (castiMriezka.size() < 1) {
+                  return "Neplatný vstup";
+              }
+         
+              // Získanie prvej hodnoty za lomítkom a pred mriežkou
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s", castiMriezka[0].c_str());
+              return date_buf;
+              
+        - lvgl.label.update:
+            id: wind_speed
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              std::vector<std::size_t> pozicie;
+              char delimTemp = '#';
+              std::size_t poziciaDelim = weather_temp.find(delimTemp);
+
+              // Nájdeme všetky pozície delimiterov
+              while (poziciaDelim != std::string::npos) {
+                  pozicie.push_back(poziciaDelim);
+                  poziciaDelim = weather_temp.find(delimTemp, poziciaDelim + 1);
+              }
+              
+              int pozicia_x = 3; // Druhá pozícia (prvé číslo za prvým delimiterom)
+                
+              // Extrahujeme hodnotu na zadanej pozícii
+              std::size_t start = (pozicia_x == 0) ? 0 : pozicie[pozicia_x - 1] + 1;
+              std::size_t end = (pozicia_x == pozicie.size()) ? weather_temp.size() : pozicie[pozicia_x];
+              std::string hodnota = weather_temp.substr(start, end - start);
+    
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s km/h", hodnota.c_str());
+              return date_buf;
+        - lvgl.label.update:
+            id: lvgl_wind_speed
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              std::vector<std::size_t> pozicie;
+              char delimTemp = '#';
+              std::size_t poziciaDelim = weather_temp.find(delimTemp);
+
+              // Nájdeme všetky pozície delimiterov
+              while (poziciaDelim != std::string::npos) {
+                  pozicie.push_back(poziciaDelim);
+                  poziciaDelim = weather_temp.find(delimTemp, poziciaDelim + 1);
+              }
+              
+              int pozicia_x = 3; // Druhá pozícia (prvé číslo za prvým delimiterom)
+                
+              // Extrahujeme hodnotu na zadanej pozícii
+              std::size_t start = (pozicia_x == 0) ? 0 : pozicie[pozicia_x - 1] + 1;
+              std::size_t end = (pozicia_x == pozicie.size()) ? weather_temp.size() : pozicie[pozicia_x];
+              std::string hodnota = weather_temp.substr(start, end - start);
+    
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s", hodnota.c_str());
+              return date_buf;
+
+        #- lvgl.label.update:
+        #    id: uv_index
+        #    text: !lambda |-
+        #      std::string weather_temp = id(weatherstation).state;
+        #      char delimTemp = '#';
+        #      int pozicia_x = 4; // position 0 first
+        #
+        #      std::size_t start = 0;
+        #      std::size_t end = 0;
+        #      for (int i = 0; i <= pozicia_x; ++i) {
+        #          start = end;
+        #          end = weather_temp.find(delimTemp, start + 1);
+        #          if (end == std::string::npos) { end   = weather_temp.size(); break; }
+        #          if (i < pozicia_x)            { start = end + 1; }
+        #      }
+        #
+        #      std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+        #
+        #      static char date_buf[20];
+        #      snprintf(date_buf, sizeof(date_buf), "%s UV", hodnota.c_str());
+        #      return date_buf;
+
+        - lvgl.label.update:
+            id: rain_mm
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              char delimTemp = '#';
+              int pozicia_x = 4; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s mm/h", hodnota.c_str());
+              return date_buf;
+        - lvgl.label.update:
+            id: lvgl_rain_mm
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              char delimTemp = '#';
+              int pozicia_x = 4; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s", hodnota.c_str());
+              return date_buf;
+        # ADDITIONAL INFO WEATHER
+        - lvgl.label.update:
+            id: lvgl_humidity
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              char delimTemp = '#';
+              int pozicia_x = 5; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s %%", hodnota.c_str());
+              return date_buf;
+              
+        - lvgl.label.update:
+            id: lvgl_wind_gust
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              char delimTemp = '#';
+              int pozicia_x = 6; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "Gust: %s km/h", hodnota.c_str());
+              return date_buf;
+        - lvgl.label.update:
+            id: lvgl_wind_mean
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              char delimTemp = '#';
+              int pozicia_x = 3; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "Mean: %s km/h", hodnota.c_str());
+              return date_buf;
+              
+        - lvgl.label.update:
+            id: lvgl_rain_drop
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              char delimTemp = '#';
+              int pozicia_x = 7; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "Rainfall: %s kΩ", hodnota.c_str());
+              return date_buf;
+              
+        - lvgl.label.update:
+            id: lvgl_snow
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              char delimTemp = '#';
+              int pozicia_x = 8; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "Snow: %s mm/h", hodnota.c_str());
+              return date_buf;
+              
+        - lvgl.label.update:
+            id: lvgl_uvi
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              char delimTemp = '#';
+              int pozicia_x = 9; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "UVI: %s", hodnota.c_str());
+              return date_buf;
+              
+        - lvgl.label.update:
+            id: lvgl_pressure
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              char delimTemp = '#';
+              int pozicia_x = 10; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s hPa", hodnota.c_str());
+              return date_buf;
+              
+        - lvgl.label.update:
+            id: lvgl_cloud_current
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              char delimTemp = '#';
+              int pozicia_x = 11; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "Current: %s %%", hodnota.c_str());
+              return date_buf;
+              
+        - lvgl.label.update:
+            id: lvgl_cloud_forecast
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              char delimTemp = '#';
+              int pozicia_x = 12; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "Forecast: %s %%", hodnota.c_str());
+              return date_buf;
+              
+        - lvgl.label.update:
+            id: lvgl_pm1
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              char delimTemp = '#';
+              int pozicia_x = 13; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "PM1.0: %s µg/m³", hodnota.c_str());
+              return date_buf;
+              
+        - lvgl.label.update:
+            id: lvgl_pm25
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              char delimTemp = '#';
+              int pozicia_x = 14; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "PM2.5: %s µg/m³", hodnota.c_str());
+              return date_buf;
+              
+        - lvgl.label.update:
+            id: lvgl_radiation
+            text: !lambda |-
+              std::string weather_temp = id(weatherstation).state;
+              char delimTemp = '#';
+              int pozicia_x = 15; // position 0 first
+
+              std::size_t start = 0;
+              std::size_t end = 0;
+              for (int i = 0; i <= pozicia_x; ++i) {
+                  start = end;
+                  end = weather_temp.find(delimTemp, start + 1);
+                  if (end == std::string::npos) { end   = weather_temp.size(); break; }
+                  if (i < pozicia_x)            { start = end + 1; }
+              }
+
+              std::string hodnota = weather_temp.substr(start + 1, end - start - 1);
+
+              static char date_buf[20];
+              snprintf(date_buf, sizeof(date_buf), "%s µSv/h", hodnota.c_str());
+              return date_buf;
+        #- delay: 500ms
+        #- script.execute: 
+
+#-------------------------------------------
+# EXPANDER
+#-------------------------------------------
+# I/O expander. Touchscreen RESET and INTERRUPT are not used.
+pca9554:
+  - id: p_c_a
+    pin_count: 16
+    address: 0x20
+    
+#-------------------------------------------
+# TOUCHSCREEN
+#-------------------------------------------
+touchscreen:
+  platform: gt911
+  i2c_id: bus_a
+  #rotation: 180
+  #transform:
+  #  mirror_x: true
+  #  mirror_y: true
+  id: my_touchscreen
+  #interrupt_pin:
+  display: st7701_display
+  # address: 0x5D
+  on_release:
+    then:
+      - if:
+          condition: lvgl.is_paused
+          then:
+            - light.turn_on: display_backlight
+            - lvgl.resume:
+            - lvgl.widget.redraw:
+
+  on_touch:
+    - logger.log:
+          format: Touch at (%d, %d)
+          args: [touch.x, touch.y]
+    - lambda: |-
+          ESP_LOGI("cal", "x=%d, y=%d, x_raw=%d, y_raw=%0d",
+              touch.x,
+              touch.y,
+              touch.x_raw,
+              touch.y_raw
+              );
+    #- display.page.show: main_page
+    #- component.update: st7701_display
+    #- delay: 10s
+    #- display.page.show: screen_saver
+    
+#-------------------------------------------
+# DISPLAY
+#-------------------------------------------
+display:
+  - platform: st7701s
+    id: st7701_display
+    rotation: 180
+    update_interval: never
+    auto_clear_enabled: False
+    data_rate:   2MHz # 8MHz
+    spi_mode:    MODE3
+    color_order: RGB
+    dimensions:
+      width:  480
+      height: 480
+    invert_colors: false
+    transform:
+      mirror_x: true
+      mirror_y: true
+    cs_pin: 39
+      # reset not defined 
+    reset_pin: # CONNECTED TO GND
+      pca9554: p_c_a
+      number:  5
+    de_pin:    18
+    hsync_pin: 16
+    vsync_pin: 17
+    pclk_pin:  21
+    init_sequence: 
+      - 1
+      - [ 0xE0, 0x1F ]
+      - [ 0xCD, 0x00 ]
+    #hsync_pulse_width: 8
+    #hsync_front_porch: 10
+    #hsync_back_porch: 50
+    #vsync_pulse_width: 8
+    #vsync_front_porch: 10
+    #vsync_back_porch: 20
+    pclk_frequency: 12MHz
+    pclk_inverted: false
+
+    data_pins:
+      red:
+        - 11         # R1
+        - 12         # R2
+        - 13         # R3
+        - 14         # R4
+        - 0          # R5
+      green:
+        - 8          # G0
+        - 20         # G1
+        - 3          # G2
+        - 46         # G3
+        - 9          # G4
+        - 10         # G5 
+      blue:
+        - 4          # B1
+        - 5          # B2
+        - 6          # B3
+        - 7          # B4
+        - 15         # B5
+
+    #lambda: !lambda |-
+    #  // Draw the image my_image at position [x=0,y=0]
+    #  it.image(0, 0, id(esphome_logo));
+    #  it.print(240, 240, id(my_font), TextAlign::CENTER,"Hello ESPHome!");
+
+
+#-------------------------------------------
+# LVGL
+#-------------------------------------------
+lvgl:
+  touchscreens: my_touchscreen
+  on_idle:
+    timeout: 120s
+    then:
+      - logger.log: "LVGL is idle"
+      - light.turn_off:
+          id: display_backlight
+          transition_length: 3s
+      - lvgl.widget.show: boot_screen
+      - lvgl.pause:
+
+#-------------------------------------------
+# TIME COMPONENT
+#-------------------------------------------
+time:
+  - platform: ds1307
+    id: my_time
+    i2c_id: bus_a
+    on_time_sync:
+      then:
+        - lvgl.label.update:
+              id: label_date
+              text: !lambda |-
+                static const char * const day_names[] = {"Pondelok", "Utorok", "Streda", "Štvrtok", "Piatok", "Sobota", "Nedeľa"};
+                static char date_buf[21];
+                auto date = id(esptime).now();
+                if (date.is_valid())
+                  snprintf(date_buf, sizeof(date_buf), "%s %2d.%2d.%2d", day_names[date.day_of_week-2], date.day_of_month, date.month, date.year);
+                return date_buf;
+    on_time:
+    # Hours and minute
+      - cron: '00 /1 * * * *' # Trigger every minute
+        then:
+          - lvgl.label.update:
+              id: label_time_hours
+              text:
+                format: "%02d"
+                args: [ 'id(esptime).now().hour']
+
+      - cron: '00 /1 * * * *' # Trigger every minute
+        then:
+          - lvgl.label.update:
+              id: label_time_minutes
+              text:
+                format: "%02d"
+                args: ['id(esptime).now().minute']
+    # Colon blinking            
+      - cron: '/2 * * * * *'  # Trigger every 2 second
+        then: 
+          - lvgl.label.update:
+              id: label_time_colon
+              text: ":"
+              text_color: 0xF0F0F0
+          - delay: 1s
+              #text: !lambda |-
+              #  static char data_buff[16] = "--:--:--";
+              #  auto time = id(esptime).now();
+              #  if (time.is_valid())
+              #    sprintf(data_buff, "%02d:%02d:%02d", time.hour, time.minute, time.second);
+              #  return data_buff;
+          - lvgl.label.update:
+              id: label_time_colon
+              text: ":"
+              text_color: 0x000000
+
+
+  - platform: homeassistant
+    id: esptime
+    #timezone: "Europe/Bratislava"
+
+    # Synchronize time
+    on_time_sync:
+      then:
+        - ds1307.write_time:
+
+#-------------------------------------------
+# INTERVALS
+#-------------------------------------------
+interval:
+  - interval: 1s  # Interval prepínania každú sekundu
+    then:
+      if: 
+        condition:
+          - lambda: 'return id(vacuumstate).state == "cleaning";'
+        then:
+          - lvgl.widget.hide: lv_vaccum_clear_left
+          - lvgl.widget.show: lv_vaccum_clear_right
+          - delay: 0.5s
+          - lvgl.widget.show: lv_vaccum_clear_left
+          - lvgl.widget.hide: lv_vaccum_clear_right
+        else:
+          - lvgl.widget.hide: lv_vaccum_clear_left
+          - lvgl.widget.hide: lv_vaccum_clear_right
+          
+  - interval: 15s
+    then:
+      if:
+        condition: 
+          api.connected:
+        then:
+          if:      
+            condition: 
+              not:
+                or:
+                  - lambda: 'return id(vacuumstate).state == "paused";'
+                  - lambda: 'return id(vacuumstate).state == "sleeping";'
+                  - lambda: 'return id(vacuumstate).state == "docked";'
+                  - lambda: 'return id(vacuumstate).state == "idle";'
+                  - lambda: 'return id(vacuumstate).state == "unavailable";'
+                  - lambda: 'return id(vacuumstate).state == "unknown";'
+            then:
+              - delay: 1s
+              - component.update: img_vacuum_snap_on
+              - delay: 1s
+              - lvgl.image.update:
+                  id: mapvacuum
+                  src: img_vacuum_snap_on
+
+  - interval: 120s
+    then:
+      if:
+        condition: 
+          - api.connected:
+          - not:
+              or: 
+                - voice_assistant.is_running:
+                - media_player.is_playing:
+        then:
+          - delay: 5s
+          - component.update: img_weathermap_on
+      
+#-------------------------------------------
+# BUTTONS
+#------------------------------------------- 
+button:
+  - platform: restart
+    name: "${friendly_name} Reset"
