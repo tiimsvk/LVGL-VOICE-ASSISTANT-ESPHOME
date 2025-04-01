@@ -21,7 +21,8 @@ substitutions:
   vacuum_icon:       "\U000F19A1"
   aiq_icon:          "\U000F03C8"
   voice_icon:        "\U000F057E"
-  setting_icon:     "\U000F0493"
+  setting_icon:      "\U000F0493"
+  screensaver_icon:  "\U000F0DDB"
   menu_left:         "\U000F035E"
   menu_right:        "\U000F035F"
   
@@ -50,11 +51,12 @@ lvgl:
 #-------------------------------------------
 # Main settings
 #-------------------------------------------
-  buffer_size:   25%       # not PSRAM recomenndet 25% (voice assitant)
+  buffer_size:   50%       # not PSRAM recomenndet 25% (voice assitant)
   log_level:     INFO
   color_depth:   16         # RGB565 16bit
   disp_bg_image: disp_bg    # id of image background
   bg_opa:        TRANSP     # COVER, TRANSP, or number 0-256 (set COVER image background is not visble)
+  scrollbar_mode: "OFF"
 
   on_idle:
     - timeout: 10s
@@ -112,7 +114,7 @@ lvgl:
       shadow_width:  0
       border_width:  0
       bg_opa:        50%         # COVER, TRANSP, or number 0-100% (set COVER image background is not visble)
-      text_font:     roboto10
+      text_font:     font_regular
       #outline_width: 1        # dev settings
       #outline_color: 0x444444 # dev settings
       
@@ -130,7 +132,7 @@ lvgl:
       
      # Namedays label
     - id:         style_name_date
-      text_font:  bahnshrift32
+      text_font:  fontcelsius
       text_color: 0xF0F0F0
       align:      BOTTOM_LEFT
       pad_all:    0
@@ -305,7 +307,10 @@ lvgl:
                 width: 1  # width object 100%  (buttons 3x 1/3)
                 on_click:
                   then:
-                    lvgl.page.previous:
+                    - lvgl.page.previous:
+                    #- media_player.speaker.play_on_device_media_file:
+                    #    media_file: center_button_press_sound
+                    #    announcement: true
 #              - id:    top_home
 #                text:  "${home_icon}"
 #                width: 1
@@ -317,50 +322,89 @@ lvgl:
                 width: 1
                 on_click:
                   then:
-                    lvgl.page.show: main_page
+                    - lvgl.page.show: main_page
+                    #- media_player.speaker.play_on_device_media_file:
+                    #    media_file: center_button_press_sound
+                    #    announcement: true
+
               - id:    top_aiq
                 text:  "${aiq_icon}"
                 width: 1
                 on_click:
                   then:
-                    lvgl.page.show: aiq_page
+                    - lvgl.page.show: aiq_page
+                    #- media_player.speaker.play_on_device_media_file:
+                    #    media_file: center_button_press_sound
+                    #    announcement: true
+
               - id:    top_switch
                 text:  "${switch_icon}"
                 width: 1
                 on_click:
                   then:
-                    lvgl.page.show: page_1
+                    - lvgl.page.show: page_1
+                    #- media_player.speaker.play_on_device_media_file:
+                    #    media_file: center_button_press_sound
+                    #    announcement: true
+
               - id:    top_climate
                 text:  "${climate_icon}"
                 width: 1
                 on_click:
                   then:
-                    lvgl.page.show: page_2
+                    - lvgl.page.show: page_2
+                    #- media_player.speaker.play_on_device_media_file:
+                    #    media_file: center_button_press_sound
+                    #    announcement: true
+
               - id:    top_vacuum
                 text:  "${vacuum_icon}"
                 width: 1
                 on_click:
                   then:
-                    lvgl.page.show: page_3
+                    - lvgl.page.show: page_3
+                    #- media_player.speaker.play_on_device_media_file:
+                    #    media_file: center_button_press_sound
+                    #    announcement: true
+
               - id:    top_voice
                 text:  "${voice_icon}"
                 width: 1
                 on_click:
                   then:
-                    lvgl.page.show: page_voice
+                    - lvgl.page.show: page_voice
               - id:    top_setting
                 text:  "${setting_icon}"
                 width: 1
                 on_click:
                   then:
-                    lvgl.page.show: main_page
+                    - lvgl.page.show: page_settings
+                    #- media_player.speaker.play_on_device_media_file:
+                    #    media_file: center_button_press_sound
+                    #    announcement: true
+
+
+              - id:    top_screensaver
+                text:  "${screensaver_icon}"
+                width: 1
+                on_click:
+                  then:
+                    - lvgl.widget.show: boot_screen
+                    #- media_player.speaker.play_on_device_media_file:
+                    #    media_file: center_button_press_sound
+                    #    announcement: true
+
 
               - id:    top_next
                 text:  "${menu_right}"
                 width: 1
                 on_click:
                   then:
-                    lvgl.page.next:
+                    - lvgl.page.next:
+                    #- media_player.speaker.play_on_device_media_file:
+                    #    media_file: center_button_press_sound
+                    #    announcement: true
+
                     
 #-------------------------------------------
 # PAGE BOOT
@@ -380,339 +424,571 @@ lvgl:
             type:         FLEX
             flex_flow:    COLUMN_WRAP
             pad_row:      0
-          #on_press:
-          #  - lvgl.widget.hide: boot_screen
+          on_press:
+            - lvgl.widget.hide: boot_screen
           widgets:
             # --------------------------------------------------
-            # TIME
+            # FULL PAGE BOOT OBJECT
             # --------------------------------------------------
             - obj:
-                styles:       style_object
-                border_width: 0
-                pad_left:     15
-                height:       250
-                width:        100%
-                bg_opa:       0
-                layout: 
-                  type:       GRID
-                  grid_columns: [FR(241), FR(239)]
-                  #grid_rows: [CONTENT, FR(20), FR(20), FR(100)]
-                  grid_rows:    [FR(170), FR(35), FR(30)]
-                  pad_row:      0
+                styles:          style_object
+                border_width:    0
+                pad_left:        0
+                height:          100%
+                width:           100%
+                bg_opa:          0
+                scrollbar_mode: "OFF"
+                #layout: 
+                #  type:       GRID
+                #  grid_columns: [FR(241), FR(239)]
+                #  #grid_rows: [CONTENT, FR(20), FR(20), FR(100)]
+                #  grid_rows:    [FR(170), FR(35), FR(30)]
+                #  pad_row:      0
                 on_press:
                   - lvgl.widget.hide: boot_screen
+                  #- lvgl.label.update:
+                  #    id: uvindex_lvgl
+                  #    transform_angle: 0
                 # Time
                 widgets:
+                # --------------------------------------------------          
+                # CALENDAR AND NEWS AND TIME
+                # --------------------------------------------------
                   - obj:
-                      grid_cell_row_pos:    0
-                      grid_cell_column_pos: 0
-                      #grid_cell_column_span: 1
-                      grid_cell_x_align:    START
-                      grid_cell_y_align:    START
-                      styles:               style_object
-                      border_width:         0
-                      pad_all:              0
-                      height:               181
-                      width:                242
-                      bg_opa:               0
-                      layout:               
-                        type:               FLEX
-                        flex_flow:          COLUMN_WRAP
+                      #id:           lvgl_boot_info
+                      #hidden:       false
+                      styles:       style_object
+                      border_width: 0
+                      pad_all:      0
+                      height:       270
+                      width:        100%
+                      #bg_color:      0x000000 # black
+                      bg_opa:       0
+                      scrollbar_mode: "OFF"
+                      #layout: 
+                      #  type:       GRID
+                      #  grid_columns: [FR(80), FR(400)]
+                      #  grid_rows:    [FR(20), FR(20), FR(20)]
+                      #  pad_row:      0
+                      layout: 
+                        type:         GRID
+                        grid_columns: [FR(470)]
+                        grid_rows:    [FR(20), FR(250)]
+                        pad_row:      0
+                      on_press:
+                        - lvgl.widget.hide: boot_screen
                       widgets:
+                      # --------------------------------------------------
+                      # NEWS
+                      # --------------------------------------------------
+                        #- label:
+                        #    grid_cell_row_pos:     0
+                        #    grid_cell_column_pos:  0
+                        #    text:      "Správy"
+                        #    styles:     style_temp
+                        #    text_font:  fontcelsius_small
+                        #    #align:      BOTTOM_RIGHT
+                        #    #text_align: right
+                        #    #pad_top:    15
+                        #    pad_left:   10
+                  
                         - label:
-                            id:      label_time_hours
-                            styles:  style_time
-                            text:    "00"
-                            pad_all: 0
-                        - label:
-                            id:      label_time_colon
-                            styles:  style_time
-                            text:    ":"
-                            pad_all: 0
-                        - label:
-                            id:      label_time_minutes
-                            styles:  style_time
-                            text:    "00"
-                            pad_all: 0
-                  # Date 
-                  - label:
-                      grid_cell_row_pos:    1
-                      grid_cell_column_pos: 0
-                      grid_cell_x_align:    START
-                      grid_cell_y_align:    START
-                      id:       label_date
-                      styles:   style_name_date
-                      height:   30
-                      #text:   " "
-                      text:     " "
+                            grid_cell_row_pos:     0
+                            grid_cell_column_pos:  0
+                            #align:      BOTTOM_RIGHT
+                            #text_align: right
+                            pad_top:   7
+                            pad_left:  10
+                            styles:    style_name_date
+                            text_font: fontcelsius_small
+                            long_mode: scroll_circular
+                            height:    size_content
+                            width:     455px
+                            text:     ' '
+                            id:        label_news
 
-                  # Namedays
+                      # --------------------------------------------------
+                      # TIME AND CALENDAR
+                      # --------------------------------------------------
+                        - obj:
+                            grid_cell_row_pos:    1
+                            grid_cell_column_pos: 0
+                            grid_cell_x_align:    START
+                            grid_cell_y_align:    START
+                            styles:               style_object
+                            border_width:         0
+                            pad_left:             10
+                            height:               250
+                            width:                470
+                            bg_opa:               0
+                            layout:               
+                              type:               GRID
+                              grid_columns:       [FR(230), FR(230)]
+                              grid_rows:          [FR(170), FR(30), FR(30)]
+                              pad_row:            0
+                            
+                            on_press:
+                              - lvgl.widget.hide: boot_screen
+                            widgets:
+                            # CALENDAR
+                              - obj:
+                                  grid_cell_row_pos:    0
+                                  grid_cell_column_pos: 0
+                                  grid_cell_x_align:    START
+                                  grid_cell_y_align:    START
+                                  styles:               style_object
+                                  border_width:         0
+                                  pad_all:              0
+                                  pad_top:              30
+                                  height:               170
+                                  width:                242
+                                  bg_opa:               0
+                                  layout:               
+                                    type:               FLEX
+                                    flex_flow:          COLUMN_WRAP
+                                  widgets:
+                                    ## Calendar
+                                    #- label:
+                                    #    grid_cell_row_pos:     0
+                                    #    grid_cell_column_pos:  0
+                                    #    text:      "Kalendár"
+                                    #    styles:     style_temp
+                                    #    text_font:  fontcelsius_small
+                                    #    #align:      BOTTOM_RIGHT
+                                    #    #text_align: right
+                                    #    #pad_top:    15
+                                    #    pad_left:   10
+                                    #Waste
+                                    - label:
+                                        #grid_cell_row_pos:     0
+                                        #grid_cell_column_pos:  1
+                                        text:      " "
+                                        styles:     style_temp
+                                        text_font:  fontcelsius_small
+                                        #pad_left:   10
+                                        id:         calendar_waste
+                                        long_mode:  scroll_circular
+                                        width:      230
+                                        #outline_width:   1        # dev settings
+                                        #outline_color:   0xFFFFFF # dev settings
+                                    #Calendar
+                                    - label:
+                                        #grid_cell_row_pos:     1
+                                        #grid_cell_column_pos:  1
+                                        text:      " "
+                                        styles:     style_temp
+                                        text_font:  fontcelsius_small
+                                        #align:      BOTTOM_RIGHT
+                                        #text_align: right
+                                        #pad_top:    15
+                                        #pad_left:   10
+                                        id:         calendar_event_1
+                                        long_mode:  wrap
+                                        width:      230
+                                        
+                            # TIME
+                              - obj:
+                                  grid_cell_row_pos:    0
+                                  grid_cell_column_pos: 1
+                                  #grid_cell_column_span: 1
+                                  grid_cell_x_align:    END
+                                  grid_cell_y_align:    START
+                                  styles:               style_object
+                                  border_width:         0
+                                  pad_all:              0
+                                  height:               170
+                                  width:                242
+                                  bg_opa:               0
+                                  layout:               
+                                    type:               FLEX
+                                    flex_flow:          COLUMN_WRAP
+                                  widgets:
+                                    - label:
+                                        id:         label_time_hours
+                                        styles:     style_time
+                                        text:      "00"
+                                        pad_all:    0
+                                        height:     160
+                                    - label:
+                                        id:         label_time_colon
+                                        styles:     style_time
+                                        text:      ":"
+                                        text_color: 0xd1864d
+                                        pad_all:    0
+                                        height:     160
+                                    - label:
+                                        id:         label_time_minutes
+                                        styles:     style_time
+                                        text:      "00"
+                                        pad_all:    0
+                                        height:     160
+                                        on_press:
+                                          - lvgl.widget.hide: boot_screen
+                            # Date 
+                              - label:
+                                  grid_cell_row_pos:    1
+                                  grid_cell_column_pos: 1
+                                  grid_cell_x_align:    END
+                                  grid_cell_y_align:    START
+                                  id:       label_date
+                                  styles:   style_name_date
+                                  height:   30
+                                  #text:   " "
+                                  text:     " "
+                        
+                            # Namedays
+                              - label:
+                                  grid_cell_row_pos:    2
+                                  grid_cell_column_pos: 1
+                                  grid_cell_x_align:    END
+                                  grid_cell_y_align:    START
+                                  id:         label_namedays
+                                  styles:     style_name_date
+                                  text_font:  bahnshrift24
+                                  text:       " "
+                                  height:     30
+                                  
+                # --------------------------------------------------          
+                # ROUNDED INFO GRAPHIC
+                # --------------------------------------------------
+                  # Background
+                  - arc:
+                      x:          -380
+                      y:           120                           
+                      value:       0
+                      arc_width:   100
+                      start_angle: 270
+                      end_angle:   360
+                      width:       720
+                      height:      720
+                      #arc_color:
+                      arc_opa:     20%
+                      arc_rounded: false
+                      scrollbar_mode: "OFF"
+                      
+                  # AQI indicator  (width 12)        
+                  - arc:
+                      id:          lvgl_aqi_arc
+                      x:          -380
+                      y:           120                           
+                      value:       0
+                      #arc_width:   100
+                      start_angle: 270
+                      end_angle:   360
+                      width:       720
+                      height:      720
+                      max_value:   500
+                      min_value:   0
+                      scrollbar_mode: "OFF"
+                      #arc_color:
+                      
+                      arc_opa:     0%
+                      arc_rounded: false
+                      indicator:
+                        arc_color: 0xcccaca
+                        # bg_color: 0x1d5f96
+                        # bg_grad_color: 0x03324A
+                        # bg_grad_dir: VER
+                        # bg_opa:      COVER
+                      
+                  # Delimeter    
+                  - meter:
+                      x:                    -385
+                      y:                     115 
+                      height:                730
+                      width:                 730
+                      border_width:          0
+                      align:                 top_left
+                      bg_opa:                TRANSP
+                      scrollbar_mode:       "OFF"
+                      scales:
+                        - range_from:        0
+                          range_to:          6
+                          angle_range:       90
+                          rotation:          270
+                          ticks:
+                            count:           6
+                            width:           1
+                            length:          78
+                          indicators:
+                            - tick_style:
+                                start_value: 0          # color start change
+                                end_value:   6         # color end   change
+                                color_start: 0x7e7e7e
+                                color_end:   0x7e7e7e
+                                width:       1
+                                
+                # --------------------------------------------------
+                # MAIN WEATHER INFO
+                # --------------------------------------------------
+                
+                # Forecast image
+                  - image:
+                      x:          10
+                      y:          260
+                      id:         label_forecast_img
+                      src:        img_partlycloudy
+                      hidden:     true
+                      zoom:       1.1
+                      #outline_width:   1        # dev settings
+                      #outline_color:   0xFFFFFF # dev settings
+                      
+                # Temperature out
                   - label:
-                      grid_cell_row_pos:    2
-                      grid_cell_column_pos: 0
-                      grid_cell_x_align:    START
-                      grid_cell_y_align:    START
-                      id:         label_namedays
-                      styles:     style_name_date
-                      text_font:  bahnshrift24
-                      text:       " "
-                      height:     30
-
-
-            # --------------------------------------------------          
-            # WEATHER
-            # --------------------------------------------------
-            - obj:
-                styles:         style_object
-                border_width:   0
-                pad_all:        0
-                height:         150
-                width:          100%
-                #bg_color:      0x000000 # black
-                bg_opa:         0
-                id:             lvgl_boot_weather
-                hidden:         true
-                layout: 
-                  type:         GRID
-                  grid_columns: [FR(160), FR(160), FR(160)]
-                  grid_rows:    [FR(10), FR(20), FR(20), FR(20), FR(10)]
-                  pad_row:      0
-                on_press:
-                  - lvgl.widget.hide: boot_screen
-                widgets:
-                  #Temperature out
-                  - label:
-                      grid_cell_row_pos:     1
-                      grid_cell_column_pos:  0
-                      grid_cell_column_span: 1
-                      grid_cell_x_align:     END
-                      grid_cell_y_align:     START
-                      text:      "--"
+                      x:          -310
+                      y:          0
+                      text:      " " # xx°C
                       styles:     style_temp
                       align:      BOTTOM_RIGHT
                       text_align: right
                       pad_top:    5
-                      pad_right:  25
-                      id:         temp_out
+                      pad_right:  35
+                      id:         lvgl_temp_out_boot
 
                   - label:
-                      grid_cell_row_pos:     1
-                      grid_cell_column_pos:  0
-                      grid_cell_column_span: 1
-                      grid_cell_x_align: END
-                      grid_cell_y_align: START
-                      text:      "°C"
-                      styles:     style_temp
-                      text_font:  fontcelsius
-                      pad_top:    18
-                      
-                  #Temperature feels
-                  - label:
-                      grid_cell_row_pos:     3
-                      grid_cell_column_pos:  0
-                      grid_cell_column_span: 1
-                      grid_cell_x_align:     END
-                      grid_cell_y_align:     START
-                      text:      "Feels: --°C"
+                      x:         -345
+                      y:         -7
+                      text:      " "
                       styles:     style_temp
                       text_font:  fontcelsius
                       align:      BOTTOM_RIGHT
-                      text_align: right
-                      id:         temp_feels
+                      text_align: left
+                      pad_top:    5
+                      pad_right:  35
+                      id:         lvgl_temp_out_boot_dec
                       
-                      
-                  # Forecast image
-                  - image:
-                      grid_cell_row_pos:     0
-                      grid_cell_column_pos:  1
-                      grid_cell_column_span: 1
-                      grid_cell_x_align:     START
-                      grid_cell_y_align:     START
-                      id:                    label_forecast_img
-                      src:                   img_partlycloudy
-                      hidden:                true
-                      
-                      #outline_width: 1        # dev settings
-                      #outline_color: 0x444444 # dev settings
-                      
-                  # Temperature max/min
-                  - label:
-                      grid_cell_row_pos:     1
-                      grid_cell_column_pos:  2
-                      grid_cell_column_span: 1
-                      styles:     style_temp
-                      text:      "\U000F050F" #thermometer
-                      text_font:  fontforecast
-                      align:      top_left
-                      text_align: left
-                      pad_all:    0
-          
-                  - label:
-                      grid_cell_row_pos:     1
-                      grid_cell_column_pos:  2
-                      grid_cell_column_span: 1
-                      text:      "-"
-                      styles:     style_name_date
-                      text_font:  bahnshrift24
-                      align:      top_left
-                      text_align: left
-                      pad_left:   35
-                      pad_top:    0
-                      pad_bottom: 0
-                      id:         temp_minmax
+                # --------------------------------------------------
+                # ADDITIONAL WEATHER AND AQI INFO
+                # --------------------------------------------------
+                # Temp feels
+                  - obj:
+                      x:               1
+                      y:               140
+                      #x:               -10
+                      #y:               215
+                      #transform_angle: 282
+                      styles:          style_object
+                      border_width:    0
+                      pad_left:        0
+                      height:          75
+                      width:           80
+                      bg_opa:          0
+                      #outline_width:   1        # dev settings
+                      #outline_color:   0xFFFFFF # dev settings
+                      widgets:
+                        - label:
+                            id:         lvgl_temp_feels_boot
+                            #text:      "36 °"
+                            text:      " "
+                            styles:     style_temp
+                            text_font:  fonttemp_mid2
+                            align:      TOP_RIGHT
+                            text_align: right
+                        - label:
+                            id:         lvgl_temp_feels_dec_boot
+                            #text:      ".0"
+                            text:      " "
+                            styles:     style_temp
+                            text_font:  fontcelsius
+                            align:      TOP_RIGHT
+                            text_align: left
+                            y:          19
+                            x:         -10
+                        - label:
+                            text:      "Fiels"
+                            styles:     style_temp
+                            text_font:  font_regular
+                            #align:      BOTTOM_RIGHT
+                            align:      BOTTOM_MID
+                            text_align: left
+                            #transform_angle: 5
+                            hidden:     true
+                            id:         lvgl_temp_feels_name
+                            
+                # Temp min/max
+                  - obj:
+                      x:                75
+                      y:                180
+                      #x:               70
+                      #y:               225
+                      #transform_angle: 300
+                      styles:           style_object
+                      border_width:     0
+                      pad_left:         0
+                      height:           60
+                      width:            90
+                      bg_opa:           0
+                      #outline_width:    1        # dev settings
+                      #outline_color:    0xFFFFFF # dev settings
+                      widgets:
+                        - label:
+                            id:         lvgl_temp_max_boot
+                            text:      " "
+                            styles:     style_temp
+                            text_font:  fontcelsius
+                            align:      TOP_RIGHT
+                            text_align: left
+                        - label:
+                            text:      '\'
+                            styles:     style_temp
+                            text_font:  fontcelsius
+                            align:      CENTER
+                            text_align: center
+                            hidden:     true
+                            id:         lvgl_minmax_delimeter
+                        - label:
+                            id:         lvgl_temp_min_boot
+                            text:      " "
+                            styles:     style_temp
+                            text_font:  fontcelsius
+                            align:      BOTTOM_LEFT
+                            text_align: right
+                            
+                # Additional info
+                # UVI / Wind / Cloud / Rain / Snow
+                  - obj:
+                      x:               150
+                      y:               220
+                      #x:               140
+                      #y:               275
+                      #transform_angle: 315
+                      styles:          style_object
+                      border_width:    0
+                      pad_left:        0
+                      height:          90
+                      width:           95
+                      bg_opa:          0
+                      #outline_width:   1        # dev settings
+                      #outline_color:   0xFFFFFF # dev settings
+                      widgets:
+                        - label:
+                            text:      " "
+                            styles:     style_temp
+                            text_font:  font_regular
+                            align:      TOP_MID
+                            text_align: center
+                            id:         lvgl_weather_unit_boot
+                            #y:          20
+                            #x:         -10
+                        - obj:
+                            layout:
+                              type:            FLEX    
+                              pad_row:         0
+                              pad_column:      0
+                              flex_align_main: CENTER
+                            x:               7
+                            align:           CENTER
+                            #transform_angle: 315
+                            styles:          style_object
+                            border_width:    0
+                            height:          60
+                            width:           80
+                            bg_opa:          0
+                            #outline_width:   1        # dev settings
+                            #outline_color:   0xFFFFFF # dev settings
+                            widgets:
+                              - label:
+                                  text:      " "
+                                  styles:     style_temp
+                                  text_font:  fonttemp_mid2
+                                  text_align: right
+                                  id:         lvgl_weather_value_boot
+                                  
+                              - label:
+                                  text:      " "
+                                  styles:     style_temp
+                                  text_font:  fontcelsius
+                                  text_align: left
+                                  pad_top:    18
+                                  pad_right:   10
+                                  id:         lvgl_weather_value_dec_boot
 
-                  # Wind
-                  - label:
-                      grid_cell_row_pos:     2
-                      grid_cell_column_pos:  2
-                      grid_cell_column_span: 1
-                      text:      "\U000F059D"
-                      styles:     style_temp
-                      text_font:  fontforecast
-                      align:      top_left
-                      text_align: left
-          
-                  - label:
-                      grid_cell_row_pos:     2
-                      grid_cell_column_pos:  2
-                      grid_cell_column_span: 1
-                      text:      "-"
-                      styles:     style_name_date
-                      text_font:  bahnshrift24
-                      align:      top_left
-                      text_align: left
-                      pad_left:   35
-                      pad_top:    0
-                      pad_bottom: 0
-                      id:         wind_speed
-
-                  # UV
-                  #- label:
-                  #    grid_cell_row_pos:     2
-                  #    grid_cell_column_pos:  2
-                  #    grid_cell_column_span: 1
-                  #    styles:     style_temp
-                  #    text:      "\U000F17FE"
-                  #    text_font:  fontforecast
-                  #    align:      top_left
-                  #    text_align: left
-                  #    pad_all:    0
-          
-                  #- label:
-                  #    grid_cell_row_pos:     2
-                  #    grid_cell_column_pos:  2
-                  #    grid_cell_column_span: 1
-                  #    text:      "2.2 UV"
-                  #    styles:     style_name_date
-                  #    text_font:  bahnshrift24
-                  #    align:      top_left
-                  #    text_align: left
-                  #    pad_left:   35
-                  #    id:         uv_index
-                     
-                  # Rain
-                  - label:
-                      grid_cell_row_pos:     3
-                      grid_cell_column_pos:  2
-                      grid_cell_column_span: 1
-                      styles:     style_temp
-                      text:      "\U000F0597"
-                      text_font:  fontforecast
-                      align:      top_left
-                      text_align: left
-          
-                  - label:
-                      grid_cell_row_pos:     3
-                      grid_cell_column_pos:  2
-                      grid_cell_column_span: 1
-                      text:      "-"
-                      styles:     style_name_date
-                      text_font:  bahnshrift24
-                      align:      top_left
-                      text_align: left
-                      pad_left:   35
-                      id:         rain_mm
-
-            # --------------------------------------------------          
-            # CALENDAR AND NEWS
-            # --------------------------------------------------
-            - obj:
-                id:           lvgl_boot_calendar
-                hidden:       true
-                styles:       style_object
-                border_width: 0
-                pad_all:      0
-                height:       80
-                width:        100%
-                #bg_color:      0x000000 # black
-                bg_opa:       0
-                layout: 
-                  type:       GRID
-                  grid_columns: [FR(80), FR(400)]
-                  grid_rows:    [FR(20), FR(20), FR(20)]
-                  pad_row:      0
-                on_press:
-                  - lvgl.widget.hide: boot_screen
-                widgets:
-                  # Calendar
-                  - label:
-                      grid_cell_row_pos:     0
-                      grid_cell_column_pos:  0
-                      text:      "Kalendár"
-                      styles:     style_temp
-                      text_font:  fontcelsius_small
-                      #align:      BOTTOM_RIGHT
-                      #text_align: right
-                      #pad_top:    15
-                      pad_left:   10
-                  #Waste
-                  - label:
-                      grid_cell_row_pos:     0
-                      grid_cell_column_pos:  1
-                      text:      " "
-                      styles:     style_temp
-                      text_font:  fontcelsius_small
-                      pad_left:   10
-                      id:         calendar_waste
-                  #Calendar
-                  - label:
-                      grid_cell_row_pos:     1
-                      grid_cell_column_pos:  1
-                      text:      " "
-                      styles:     style_temp
-                      text_font:  fontcelsius_small
-                      #align:      BOTTOM_RIGHT
-                      #text_align: right
-                      #pad_top:    15
-                      pad_left:   10
-                      id:         calendar_event_1
-                  # News
-                  - label:
-                      grid_cell_row_pos:     2
-                      grid_cell_column_pos:  0
-                      text:      "Správy"
-                      styles:     style_temp
-                      text_font:  fontcelsius_small
-                      #align:      BOTTOM_RIGHT
-                      #text_align: right
-                      #pad_top:    15
-                      pad_left:   10
-
-                  - label:
-                      grid_cell_row_pos:     2
-                      grid_cell_column_pos:  1
-                      #align:      BOTTOM_RIGHT
-                      #text_align: right
-                      #pad_top:    15
-                      pad_left:  10
-                      styles:    style_name_date
-                      text_font: fontcelsius_small
-                      long_mode: scroll_circular
-                      height:    size_content
-                      width:     380px
-                      text:     ' '
-                      id:        label_news
-
+                        - label:
+                            text:      " "
+                            styles:     style_temp
+                            text_font:  font_regular
+                            align:      BOTTOM_MID
+                            text_align: center
+                            id:         lvgl_weather_info_boot
+                            #transform_angle: 5
+                            
+                # Forecast day 1
+                  - obj:
+                      x:               205
+                      y:               290
+                      #x:               140
+                      #y:               275
+                      #transform_angle: 315
+                      styles:          style_object
+                      border_width:    0
+                      pad_left:        0
+                      height:          100
+                      width:           100
+                      bg_opa:          0
+                      #outline_width:   1        # dev settings
+                      #outline_color:   0xFFFFFF # dev settings
+                      widgets:
+                        - label:
+                            text:      "\U0000006A"
+                            #text:      " "
+                            align:      CENTER
+                            text_align: CENTER
+                            text_font:  fontweater_large_test
+                            text_color: 0xe8e8e8
+                            id:         lvgl_icon_day1_boot
+                            hidden:     true
+ 
+                # AQI
+                  - obj:
+                      x:               240
+                      y:               390
+                      #x:               140
+                      #y:               275
+                      #transform_angle: 315
+                      styles:          style_object
+                      border_width:    0
+                      pad_left:        0
+                      height:          80
+                      width:           90
+                      bg_opa:          0
+                      #outline_width:   1        # dev settings
+                      #outline_color:   0xFFFFFF # dev settings
+                      widgets:
+                        - label:
+                            #text:      "\U000F069C"
+                            text:      "😊"
+                            align:      TOP_MID
+                            text_align: center
+                            text_font:  emoticon_font
+                            text_color: 0xe8e8e8
+                            id:         lvgl_icon_emoticon
+                            #x: -10
+                        - label:
+                            text:      "2.3 AQI"
+                            styles:     style_temp
+                            text_font:  font_regular
+                            align:      BOTTOM_MID
+                            text_align: center
+                            id:         lvgl_aiq_label
+                  - obj:
+                      #id:           lvgl_boot_info
+                      #hidden:       false
+                      styles:       style_object
+                      border_width: 0
+                      pad_all:      0
+                      height:       100%
+                      width:        100%
+                      bg_color:      0x000000 # black
+                      bg_opa:       0
+                      scrollbar_mode: "OFF"
+                      #layout: 
+                      #  type:       GRID
+                      #  grid_columns: [FR(80), FR(400)]
+                      #  grid_rows:    [FR(20), FR(20), FR(20)]
+                      #  pad_row:      0
+                      on_press:
+                        - lvgl.widget.hide: boot_screen
+                  
     #-------------------------------------------
     # STATUS INDICATOR HEADER
     #------------------------------------------- 
@@ -722,21 +998,22 @@ lvgl:
             id:         lvgl_online_status
             hidden:     true
             align:      top_right
-            x:         -20
+            #x:         -20
+            x:         -2
             y:          8
             text_align: right
             text_color: 0xFFFFFF
             text_font:  roboto20
       # battery indicator
-      - label:
-            id:         lvgl_battery_status
-            align:      TOP_RIGHT
-            x:         -2
-            y:          7
-            text_font:  roboto20
-            text:      "\U000F0091" # start with mdi-battery-unknown
-            text_color: 0xFFFFFF
-            text_align: right
+      #- label:
+      #      id:         lvgl_battery_status
+      #      align:      TOP_RIGHT
+      #      x:         -2
+      #      y:          7
+      #      text_font:  roboto20
+      #      text:      "\U000F0091" # start with mdi-battery-unknown
+      #      text_color: 0xFFFFFF
+      #      text_align: right
 
 #-------------------------------------------
 # PAGES
@@ -746,7 +1023,7 @@ lvgl:
     #-------------------------------------------
     # PAGE - MAIN
     #------------------------------------------- 
-    - id:   main_page
+    - id:           main_page
       #skip: true
       layout: 
         type:       FLEX
@@ -871,7 +1148,7 @@ lvgl:
                         grid_cell_y_align:    START
                         text:      " "
                         styles:     style_temp
-                        text_font:  fontcelsius_min
+                        text_font:  font_regular
                         #align:      TOP_RIGHT
                         text_align: right
                         pad_top:    20
@@ -907,7 +1184,7 @@ lvgl:
                         grid_cell_y_align:    START
                         text:      "-"
                         styles:     style_temp
-                        text_font:  fontcelsius_min
+                        text_font:  font_regular
                         align:      TOP_RIGHT
                         text_align: right
                         pad_right:  35
@@ -945,7 +1222,7 @@ lvgl:
                         grid_cell_y_align:    START
                         text:      "-"
                         styles:     style_temp
-                        text_font:  fontcelsius_min
+                        text_font:  font_regular
                         align:      TOP_RIGHT
                         text_align: right
                         id:         lvgl_temp_max
@@ -983,7 +1260,7 @@ lvgl:
                         grid_cell_y_align:    START
                         text:      "-"
                         styles:     style_temp
-                        text_font:  fontcelsius_min
+                        text_font:  font_regular
                         align:      TOP_RIGHT
                         text_align: right
                         pad_right:  40
@@ -1012,6 +1289,8 @@ lvgl:
                         text_align: right
                         pad_left:   5
                         pad_top:    3
+                        id:         lvgl_rain_name
+                        
                 
                     - label:
                         grid_cell_row_pos:     5
@@ -1020,7 +1299,7 @@ lvgl:
                         grid_cell_y_align:    START
                         text:      "-"
                         styles:     style_name_date
-                        text_font:  fontcelsius_min
+                        text_font:  font_regular
                         align:      top_left
                         text_align: left
                         pad_right:  40
@@ -1077,7 +1356,7 @@ lvgl:
                         #    text_color: 0x0000FF
                         tabs:
                     # RAIN MAP
-                          - name:    Rain
+                          - name:    Precipitation
                             id:      tabview_tab_2
                       #styles:  button_tab
                             pad_all: 0
@@ -1088,7 +1367,7 @@ lvgl:
                             #styles:         style_object
                                   border_width:   0
                                   pad_all:        0
-                                  height:         230
+                                  height:         207
                                   width:          235
                             #on_press:
                             #  - lvgl.widget.hide: weathermap
@@ -1100,15 +1379,16 @@ lvgl:
                                         id:         mapweather
                                     - label:
                                         text:      "\U000F02DC"
-                                        text_font:  fontforecast_large
+                                        text_font:  icon_switch
                                         align:      CENTER
                                         text_color: 0x000000
                                         text_opa:   70%
                                     - label:
                                         text:      "\U000F02DC"
-                                        text_font:  fontforecast
+                                        text_font:  icon_switch
                                         align:      CENTER
-                                        text_color: 0x3d85c6
+                                        text_color: 0x3d85c6 
+                                        pad_left:   1
                                     - label:
                                         id:         lvgl_outdate_image1
                                         hidden:     false
@@ -1135,7 +1415,7 @@ lvgl:
                                 #styles:         style_object
                             #border_width:   0
                             #pad_all:        0
-                                  height:         230
+                                  height:         207
                                   width:          235
                             #on_press:
                             #  - lvgl.widget.hide: lightiningmap
@@ -1187,7 +1467,7 @@ lvgl:
                                         grid_cell_column_pos:  0
                                         text:      "-"
                                         styles:     style_temp
-                                        text_font:  font_regular
+                                        text_font:  font_regular_small
                                         align:      TOP_LEFT
                                         text_align: right
                                         pad_left:   5
@@ -1209,7 +1489,7 @@ lvgl:
                                         grid_cell_column_pos:  0
                                         text:      "Gust: -"
                                         styles:     style_temp
-                                        text_font:  font_regular
+                                        text_font:  font_regular_small
                                         align:      TOP_LEFT
                                         text_align: right
                                         pad_left:   5
@@ -1220,7 +1500,7 @@ lvgl:
                                         grid_cell_column_pos:  0
                                         text:      "Mean: -"
                                         styles:     style_temp
-                                        text_font:  font_regular
+                                        text_font:  font_regular_small
                                         align:      TOP_LEFT
                                         text_align: right
                                         pad_left:   5
@@ -1242,7 +1522,7 @@ lvgl:
                                         grid_cell_column_pos:  0
                                         text:      "Rainfall: -"
                                         styles:     style_temp
-                                        text_font:  font_regular
+                                        text_font:  font_regular_small
                                         align:      TOP_LEFT
                                         text_align: right
                                         pad_left:   5
@@ -1253,7 +1533,7 @@ lvgl:
                                         grid_cell_column_pos:  0
                                         text:      "Snow: -"
                                         styles:     style_temp
-                                        text_font:  font_regular
+                                        text_font:  font_regular_small
                                         align:      TOP_LEFT
                                         text_align: right
                                         pad_left:   5
@@ -1274,7 +1554,7 @@ lvgl:
                                         grid_cell_column_pos:  0
                                         text:      "UVI: -"
                                         styles:     style_temp
-                                        text_font:  font_regular
+                                        text_font:  font_regular_small
                                         align:      TOP_LEFT
                                         text_align: right
                                         pad_left:   5
@@ -1296,7 +1576,7 @@ lvgl:
                                         grid_cell_column_pos:  1
                                         text:      "-"
                                         styles:     style_temp
-                                        text_font:  font_regular
+                                        text_font:  font_regular_small
                                         align:      TOP_LEFT
                                         text_align: right
                                         pad_left:   5
@@ -1318,7 +1598,7 @@ lvgl:
                                         grid_cell_column_pos:  1
                                         text:      "Current: -"
                                         styles:     style_temp
-                                        text_font:  font_regular
+                                        text_font:  font_regular_small
                                         align:      TOP_LEFT
                                         text_align: right
                                         pad_left:   5
@@ -1329,7 +1609,7 @@ lvgl:
                                         grid_cell_column_pos:  1
                                         text:      "Forecast: -"
                                         styles:     style_temp
-                                        text_font:  font_regular
+                                        text_font:  font_regular_small
                                         align:      TOP_LEFT
                                         text_align: right
                                         pad_left:   5
@@ -1350,7 +1630,7 @@ lvgl:
                                         grid_cell_column_pos:  1
                                         text:      "PM1.0: -"
                                         styles:     style_temp
-                                        text_font:  font_regular
+                                        text_font:  font_regular_small
                                         align:      TOP_LEFT
                                         text_align: right
                                         pad_left:   5
@@ -1361,7 +1641,7 @@ lvgl:
                                         grid_cell_column_pos:  1
                                         text:      "PM2.5: -"
                                         styles:     style_temp
-                                        text_font:  font_regular
+                                        text_font:  font_regular_small
                                         align:      TOP_LEFT
                                         text_align: right
                                         pad_left:   5
@@ -1382,7 +1662,7 @@ lvgl:
                                         grid_cell_column_pos:  1
                                         text:      "-"
                                         styles:     style_temp
-                                        text_font:  font_regular
+                                        text_font:  font_regular_small
                                         align:      TOP_LEFT
                                         text_align: right
                                         pad_left:   5
@@ -1460,7 +1740,7 @@ lvgl:
                         grid_cell_column_pos:  0
                         text:      "15-20°C"
                         text_align: CENTER
-                        text_font:  fontcelsius_min
+                        text_font:  font_regular
                         text_color: 0xe8e8e8
                         grid_cell_x_align: CENTER
                         id: lvgl_temp_day1
@@ -1540,7 +1820,7 @@ lvgl:
                         grid_cell_column_pos:  0
                         text:      "15-20°C"
                         text_align: CENTER
-                        text_font:  fontcelsius_min
+                        text_font:  font_regular
                         text_color: 0xe8e8e8
                         grid_cell_x_align: CENTER
                         id: lvgl_temp_day2
@@ -1620,7 +1900,7 @@ lvgl:
                         grid_cell_column_pos:  0
                         text:      "15-20°C"
                         text_align: CENTER
-                        text_font:  fontcelsius_min
+                        text_font:  font_regular
                         text_color: 0xe8e8e8
                         grid_cell_x_align: CENTER
                         id: lvgl_temp_day3
@@ -1700,7 +1980,7 @@ lvgl:
                         grid_cell_column_pos:  0
                         text:      "15-20°C"
                         text_align: CENTER
-                        text_font:  fontcelsius_min
+                        text_font:  font_regular
                         text_color: 0xe8e8e8
                         grid_cell_x_align: CENTER
                         id: lvgl_temp_day4
@@ -1728,7 +2008,8 @@ lvgl:
     #-------------------------------------------
     # PAGE - AIR QUALITY
     #-------------------------------------------
-    - id: aiq_page
+    - id:           aiq_page
+      skip:         true
       layout: 
         type:       FLEX
         pad_row:    0
@@ -1746,7 +2027,7 @@ lvgl:
         - label:
             text:      "INDOOR AIR QUALITY"
             styles:     style_temp
-            text_font:  fontcelsius_min
+            text_font:  font_regular
             align:      TOP_LEFT
             text_align: left
             pad_all:    0
@@ -1946,7 +2227,7 @@ lvgl:
                     - label:
                         text:          "\U000F07E4 eCO2"
                         styles:         style_temp
-                        text_font:      fontcelsius_min
+                        text_font:      font_regular
                         align:          TOP_LEFT
                         text_align:     left
                         width:          100%
@@ -1958,7 +2239,7 @@ lvgl:
                     - label:              
                         text:          " ppm"
                         styles:         style_temp
-                        text_font:      fontcelsius_min
+                        text_font:      font_regular
                         pad_top:        5
 
               #-------------------------------------------
@@ -1984,7 +2265,7 @@ lvgl:
                     - label:
                         text:          "\U000F013B TVOC"
                         styles:         style_temp
-                        text_font:      fontcelsius_min
+                        text_font:      font_regular
                         align:          TOP_LEFT
                         text_align:     right
                         width:          100%
@@ -1996,7 +2277,7 @@ lvgl:
                     - label:          
                         text:          "µg/m³ "
                         styles:         style_temp
-                        text_font:      fontcelsius_min
+                        text_font:      font_regular
                         pad_top:        5
               #-------------------------------------------
               # PM 2.5 / 10
@@ -2020,7 +2301,7 @@ lvgl:
                     - label:
                         text:          "\U000F0D7C PM2.5/10"
                         styles:         style_temp
-                        text_font:      fontcelsius_min
+                        text_font:      font_regular
                         align:          TOP_LEFT
                         text_align:     left
                         width:          100%
@@ -2032,7 +2313,7 @@ lvgl:
                     - label:
                         text:          " µg/m³"
                         styles:         style_temp
-                        text_font:      fontcelsius_min
+                        text_font:      font_regular
                         pad_top:        5
                   
               #-------------------------------------------
@@ -2058,7 +2339,7 @@ lvgl:
                     - label:
                         text:          "\U000F0093 CH₂0"
                         styles:         style_temp
-                        text_font:      fontcelsius_min
+                        text_font:      font_regular
                         align:          TOP_RIGHT
                         text_align:     right
                         width:          100%
@@ -2070,7 +2351,7 @@ lvgl:
                     - label:        
                         text:          "µg/m³ "
                         styles:         style_temp
-                        text_font:      fontcelsius_min
+                        text_font:      font_regular
                         pad_top:        5
                   
     #-------------------------------------------
@@ -2097,7 +2378,7 @@ lvgl:
         - label:
             text:      "VOICE ASSISTANT"
             styles:     style_temp
-            text_font:  fontcelsius_min
+            text_font:  font_regular
             align:      TOP_LEFT
             text_align: left
             pad_all:    0
@@ -2105,19 +2386,31 @@ lvgl:
             pad_top:    20
             width:      480
         #-------------------------------------------
+        # RESPONSE
+        #-------------------------------------------
+        - label:
+            id:         lvgl_text_response
+            text:      " "
+            styles:     style_temp
+            text_font:  font_regular
+            align:      TOP_LEFT
+            text_align: left
+            pad_all:    20
+            width:      100%
+        #-------------------------------------------
         # voice-indicators
         #-------------------------------------------
         - obj:
             bg_opa:        TRANSP
             width:         100%
-            height:        360
+            height:        200
             border_width:  0
             radius:        0
             pad_all:       0
             layout: 
               type:         GRID
               grid_columns: [FR(480)]
-              grid_rows:    [FR(380)]
+              grid_rows:    [FR(320)]
               pad_row:      0
               pad_column:   0
             widgets:
@@ -2174,7 +2467,7 @@ lvgl:
                   text:       "\U000F043B IDLE"
                   id:          lvgl_text_voice
                   styles:      style_temp
-                  text_font:   fontcelsius_min
+                  text_font:   font_regular
                   align:       CENTER
                   text_align:  center
                   pad_all:     0
@@ -2220,7 +2513,7 @@ lvgl:
               - label:
                   text:      "CIRCUITBREAKER"
                   styles:     style_temp
-                  text_font:  fontcelsius_min
+                  text_font:  font_regular
                   align:      TOP_LEFT
                   text_align: left
                   pad_all:    0
@@ -2378,19 +2671,19 @@ lvgl:
                         data:
                           entity_id: $circuit_atelier
                           
-              #-------------------------------------------
-              # OTHER SWITCHES
-              #-------------------------------------------
+            #-------------------------------------------
+            # OTHER SWITCHES
+            #-------------------------------------------
               - label:
                   text:      "SWITCHES"
                   styles:     style_temp
-                  text_font:  fontcelsius_min
+                  text_font:  font_regular
                   align:      TOP_LEFT
                   text_align: left
                   pad_all:    5
                   width:      480
                   
-              # Mediacenter
+            # Mediacenter
               - button:
                   height: 80
                   checkable: true
@@ -2411,7 +2704,7 @@ lvgl:
                         data:
                           entity_id: $switch_mediacenter
 
-              # Pool filter
+            # Pool filter
               - button:
                   height: 80
                   checkable: true
@@ -2432,7 +2725,7 @@ lvgl:
                         data:
                           entity_id: $switch_poolfilter
 
-              # Watering
+            # Watering
               - button:
                   height: 80
                   checkable: true
@@ -2453,19 +2746,61 @@ lvgl:
                         data:
                           entity_id: $switch_watering
 
-              #-------------------------------------------
-              # LIGHTS
-              #-------------------------------------------
+            # Kotol
+              - button:
+                  height: 80
+                  checkable: true
+                  id: lvgl_button_kotol
+                  widgets:
+                    - label:
+                        text_font: icon_switch
+                        align: TOP_MID
+                        text: "\U000F1A59"
+                    - label:
+                        align: BOTTOM_MID
+                        text: "HEATING"
+                        long_mode: dot
+                        text_font:  fontcelsius_small
+                  on_click:
+                    - homeassistant.action:
+                        action:      switch.toggle
+                        data:
+                          entity_id: $switch_kotol
+
+            # Boiler
+              - button:
+                  height: 80
+                  checkable: true
+                  id: lvgl_button_boiler
+                  widgets:
+                    - label:
+                        text_font: icon_switch
+                        align: TOP_MID
+                        text: "\U000F1A57"
+                    - label:
+                        align: BOTTOM_MID
+                        text: "BOILER"
+                        long_mode: dot
+                        text_font:  fontcelsius_small
+                  on_click:
+                    - homeassistant.action:
+                        action:      switch.toggle
+                        data:
+                          entity_id: $switch_boiler
+
+            #-------------------------------------------
+            # LIGHTS
+            #-------------------------------------------
               - label:
                   text:      "LIGHTS"
                   styles:     style_temp
-                  text_font:  fontcelsius_min
+                  text_font:  font_regular
                   align:      TOP_LEFT
                   text_align: left
                   pad_all:    5
                   width:      480
                   
-              # Living room light 
+            # Living room light 
               - button:
                   height: 140
                   checkable: true
@@ -2523,7 +2858,7 @@ lvgl:
                                 entity_id:  $light_livingroom
                                 brightness: !lambda return int(x);
 
-              # Media center light     
+            # Media center light     
               - button:
                   height:            140
                   checkable:         true
@@ -2535,7 +2870,7 @@ lvgl:
                         text:       "\U000F1356"
                     - label:
                         align:       BOTTOM_MID
-                        text:       "MEDIA CENTER"
+                        text:       "MEDIA"
                         long_mode:   dot
                         text_font:   fontcelsius_small
                   on_value:
@@ -2585,7 +2920,7 @@ lvgl:
                                 entity_id:  $light_mediacenter
                                 brightness: !lambda return int(x);
 
-              # Kitchen sink light
+            # Kitchen sink light
               - button:
                   height:            140
                   checkable:         true
@@ -2597,7 +2932,7 @@ lvgl:
                         text:       "\U000F179B"
                     - label:
                         align:       BOTTOM_MID
-                        text:       "KITCHEN SINK"
+                        text:       "KITCHEN"
                         long_mode:   dot
                         text_font:   fontcelsius_small
                   on_click:
@@ -2606,7 +2941,7 @@ lvgl:
                         data:
                           entity_id: $light_kitchensink
 
-              # Bar light
+            # Bar light
               - button:
                   height:            140
                   checkable:         true
@@ -2627,7 +2962,7 @@ lvgl:
                         data:
                           entity_id: $light_bar
                         
-              # Hall light
+            # Hall light
               - button:
                   height:            140
                   checkable:         true
@@ -2647,6 +2982,69 @@ lvgl:
                         action:      light.toggle
                         data:
                           entity_id: $light_hall
+      
+            # Bedroom light
+              - button:
+                  height:            140
+                  checkable:         true
+                  id:                lvgl_light_bedroom
+                  widgets:
+                    - label:
+                        text_font:   icon_switch
+                        align:       TOP_MID
+                        text:       "\U000F0289"
+                    - label:
+                        align:       BOTTOM_MID
+                        text:       "BED"
+                        long_mode:   dot
+                        text_font:   fontcelsius_small
+                  on_click:
+                    - homeassistant.action:
+                        action:      light.toggle
+                        data:
+                          entity_id: $light_bedroom
+      
+            # Pantry light
+              - button:
+                  height:            140
+                  checkable:         true
+                  id:                lvgl_light_pantry
+                  widgets:
+                    - label:
+                        text_font:   icon_switch
+                        align:       TOP_MID
+                        text:       "\U000F0E95"
+                    - label:
+                        align:       BOTTOM_MID
+                        text:       "PANTRY"
+                        long_mode:   dot
+                        text_font:   fontcelsius_small
+                  on_click:
+                    - homeassistant.action:
+                        action:      light.toggle
+                        data:
+                          entity_id: $light_pantry
+      
+            # Pool light
+              - button:
+                  height:            140
+                  checkable:         true
+                  id:                lvgl_light_pool
+                  widgets:
+                    - label:
+                        text_font:   icon_switch
+                        align:       TOP_MID
+                        text:       "\U000F12BA"
+                    - label:
+                        align:       BOTTOM_MID
+                        text:       "POOL"
+                        long_mode:   dot
+                        text_font:   fontcelsius_small
+                  on_click:
+                    - homeassistant.action:
+                        action:      light.toggle
+                        data:
+                          entity_id: $light_pool
       
 
     #-------------------------------------------
@@ -2680,7 +3078,7 @@ lvgl:
         - label:
             text:      "THERMOSTAT"
             styles:     style_temp
-            text_font:  fontcelsius_min
+            text_font:  font_regular
             align:      TOP_LEFT
             text_align: left
             pad_all:    0
@@ -2726,9 +3124,9 @@ lvgl:
                   grid_cell_row_pos:     0
                   grid_cell_x_align:    END
                   grid_cell_y_align:    START
-                  text:      "20.0"
+                  text:      "?"
                   styles:     style_temp
-                  text_font:  fontcelsius_min
+                  text_font:  font_regular
                   align:      TOP_RIGHT
                   text_align: right
                   pad_right:  35
@@ -2761,7 +3159,7 @@ lvgl:
                   grid_cell_row_pos:     1
                   grid_cell_x_align:    END
                   grid_cell_y_align:    START
-                  text:      "OFF"
+                  text:      "?"
                   styles:     style_temp
                   text_font:  fontcelsius_small
                   align:      TOP_RIGHT
@@ -2784,7 +3182,7 @@ lvgl:
                   grid_cell_row_pos:     2
                   grid_cell_x_align:    END
                   grid_cell_y_align:    START
-                  text:      "235 W"
+                  text:      "?"
                   styles:     style_temp
                   text_font:  fontcelsius_small
                   align:      TOP_RIGHT
@@ -2832,7 +3230,7 @@ lvgl:
                     #    value: !lambda "return x + 0.5;"
                   widgets:
                     - label:
-                        text_font:      fontcelsius_min
+                        text_font:      font_regular
                         align:          CENTER
                         text_align:     CENTER
                         text:          "${arrow_up}"
@@ -2859,7 +3257,7 @@ lvgl:
               - label:
                   align:          TOP_RIGHT
                   text_align:     RIGHT
-                  text:          "23.5"
+                  text:          "?"
                   styles:         style_temp
                   text_font:      fontcelsius
                   id:             lvgl_temp_setup_termostat
@@ -2869,7 +3267,7 @@ lvgl:
               - label:
                   text:          "°C"
                   styles:         style_temp
-                  text_font:      fontcelsius_min
+                  text_font:      font_regular
                   id:             lvgl_temp_celsius_termostat
                   align:          TOP_RIGHT
                   text_align:     RIGHT
@@ -2881,7 +3279,7 @@ lvgl:
               #    align:          CENTER
               #    text_align:     CENTER
               #    text_color:     0xF0F0F0
-              #    text_font:      fontcelsius_min
+              #    text_font:      font_regular
               #    width:          100
               #    height:          30
               #    range_from:      20
@@ -2913,7 +3311,7 @@ lvgl:
                     #- lvgl.spinbox.decrement: lvgl_spinbox_thermostat
                   widgets:
                     - label:
-                        text_font:      fontcelsius_min
+                        text_font:      font_regular
                         align:          CENTER
                         text_align:     CENTER
                         text:          "${arrow_down}"
@@ -3331,7 +3729,7 @@ lvgl:
         - label:
             text:      "AC LIVING ROOM"
             styles:     style_temp
-            text_font:  fontcelsius_min
+            text_font:  font_regular
             align:      TOP_LEFT
             text_align: left
             pad_all:    0
@@ -3377,9 +3775,9 @@ lvgl:
                   grid_cell_row_pos:     0
                   grid_cell_x_align:    END
                   grid_cell_y_align:    START
-                  text:      "20.0"
+                  text:      "?"
                   styles:     style_temp
-                  text_font:  fontcelsius_min
+                  text_font:  font_regular
                   align:      TOP_RIGHT
                   text_align: right
                   pad_right:  35
@@ -3412,7 +3810,7 @@ lvgl:
                   grid_cell_row_pos:     1
                   grid_cell_x_align:    END
                   grid_cell_y_align:    START
-                  text:      "OFF"
+                  text:      "?"
                   styles:     style_temp
                   text_font:  fontcelsius_small
                   align:      TOP_RIGHT
@@ -3435,7 +3833,7 @@ lvgl:
                   grid_cell_row_pos:     2
                   grid_cell_x_align:    END
                   grid_cell_y_align:    START
-                  text:      "235 W"
+                  text:      "?"
                   styles:     style_temp
                   text_font:  fontcelsius_small
                   align:      TOP_RIGHT
@@ -3483,7 +3881,7 @@ lvgl:
                     #    value: !lambda "return x + 0.5;"
                   widgets:
                     - label:
-                        text_font:      fontcelsius_min
+                        text_font:      font_regular
                         align:          CENTER
                         text_align:     CENTER
                         text:          "${arrow_up}"
@@ -3511,7 +3909,7 @@ lvgl:
               - label:
                   align:          TOP_RIGHT
                   text_align:     RIGHT
-                  text:          "23.5"
+                  text:          "?"
                   styles:         style_temp
                   text_font:      fontcelsius
                   id:             lvgl_temp_setup_acliving
@@ -3521,7 +3919,7 @@ lvgl:
               - label:
                   text:          "°C"
                   styles:         style_temp
-                  text_font:      fontcelsius_min
+                  text_font:      font_regular
                   align:          TOP_RIGHT
                   text_align:     RIGHT
                   pad_top:        2
@@ -3533,7 +3931,7 @@ lvgl:
               #    align:          CENTER
               #    text_align:     CENTER
               #    text_color:     0xF0F0F0
-              #    text_font:      fontcelsius_min
+              #    text_font:      font_regular
               #    width:          100
               #    height:          30
               #    range_from:      20
@@ -3565,7 +3963,7 @@ lvgl:
                     #- lvgl.spinbox.decrement: lvgl_spinbox_thermostat
                   widgets:
                     - label:
-                        text_font:      fontcelsius_min
+                        text_font:      font_regular
                         align:          CENTER
                         text_align:     CENTER
                         text:          "${arrow_down}"
@@ -3957,7 +4355,7 @@ lvgl:
         - label:
             text:      "AC ATELIER"
             styles:     style_temp
-            text_font:  fontcelsius_min
+            text_font:  font_regular
             align:      TOP_LEFT
             text_align: left
             pad_all:    0
@@ -4003,9 +4401,9 @@ lvgl:
                   grid_cell_row_pos:     0
                   grid_cell_x_align:    END
                   grid_cell_y_align:    START
-                  text:      "20.0"
+                  text:      "?"
                   styles:     style_temp
-                  text_font:  fontcelsius_min
+                  text_font:  font_regular
                   align:      TOP_RIGHT
                   text_align: right
                   pad_right:  35
@@ -4038,7 +4436,7 @@ lvgl:
                   grid_cell_row_pos:     1
                   grid_cell_x_align:    END
                   grid_cell_y_align:    START
-                  text:      "OFF"
+                  text:      "?"
                   styles:     style_temp
                   text_font:  fontcelsius_small
                   align:      TOP_RIGHT
@@ -4061,7 +4459,7 @@ lvgl:
                   grid_cell_row_pos:     2
                   grid_cell_x_align:    END
                   grid_cell_y_align:    START
-                  text:      "235 W"
+                  text:      "?"
                   styles:     style_temp
                   text_font:  fontcelsius_small
                   align:      TOP_RIGHT
@@ -4109,7 +4507,7 @@ lvgl:
                     #    value: !lambda "return x + 0.5;"
                   widgets:
                     - label:
-                        text_font:      fontcelsius_min
+                        text_font:      font_regular
                         align:          CENTER
                         text_align:     CENTER
                         text:          "${arrow_up}"
@@ -4136,7 +4534,7 @@ lvgl:
               - label:
                   align:          TOP_RIGHT
                   text_align:     RIGHT
-                  text:          "23.5"
+                  text:          "?"
                   styles:         style_temp
                   text_font:      fontcelsius
                   id:             lvgl_temp_setup_acatelier
@@ -4146,7 +4544,7 @@ lvgl:
               - label:
                   text:          "°C"
                   styles:         style_temp
-                  text_font:      fontcelsius_min
+                  text_font:      font_regular
                   align:          TOP_RIGHT
                   text_align:     RIGHT
                   pad_top:        2
@@ -4158,7 +4556,7 @@ lvgl:
               #    align:          CENTER
               #    text_align:     CENTER
               #    text_color:     0xF0F0F0
-              #    text_font:      fontcelsius_min
+              #    text_font:      font_regular
               #    width:          100
               #    height:          30
               #    range_from:      20
@@ -4190,7 +4588,7 @@ lvgl:
                     #- lvgl.spinbox.decrement: lvgl_spinbox_thermostat
                   widgets:
                     - label:
-                        text_font:      fontcelsius_min
+                        text_font:      font_regular
                         align:          CENTER
                         text_align:     CENTER
                         text:          "${arrow_down}"
@@ -4601,7 +4999,7 @@ lvgl:
         - label:
             text:      "VACUUM CLEANER"
             styles:     style_temp
-            text_font:  fontcelsius_min
+            text_font:  font_regular
             align:      TOP_LEFT
             text_align: left
             pad_all:    0
@@ -5129,8 +5527,9 @@ lvgl:
                               data: 
                                 entity_id: vacuum.dreamebot_l10s_pro
                         else:
+                          - logger.log: "SEND COMMAND"
                           - homeassistant.action:
-                              action: script.vacuum_test
+                              action: script.vacuum_segments_clear
                               #data: 
                               #  entity_id: vacuum_segments_clear
 
@@ -5323,7 +5722,7 @@ lvgl:
                         grid_cell_y_align:    START
                         text:      "Paused"
                         styles:     style_temp
-                        text_font:  fontcelsius_min
+                        text_font:  font_regular
                         align:      TOP_LEFT
                         text_align: LEFT
                         id:         lv_state_vacuum
@@ -5504,12 +5903,207 @@ lvgl:
                                        data: 
                                          entity_id: $vacuum_fan
                                          option:   'turbo'
-                                         
+
+    #-------------------------------------------
+    # PAGE 4 - SETTINGS
+    #-------------------------------------------      
+    - id: page_settings
+      layout: 
+        type:       FLEX
+        pad_row:    0
+        pad_column: 0
+      width:        100%
+      styles:       style_object
+      border_width: 0
+      outline_pad:  0
+      radius:       0
+      pad_left:     5
+      pad_top:      20
+      pad_right:     0
+      pad_bottom:    0
+      scrollbar_mode: "OFF"
+      #pad_column:   5
+      #outline_width: 1        # dev settings
+      #outline_color: 0x444444 # dev settings
+      widgets:
+        - obj:
+            layout: 
+              type: FLEX
+              pad_row:    0
+              pad_column: 2
+            width:          100%
+            height:         100%
+            bg_opa:         TRANSP
+            pad_all:        0
+            scrollbar_mode: "OFF"
+            widgets:
+            #-------------------------------------------
+            # LABEL NAME
+            #-------------------------------------------
+              - label:
+                  text:      "SETTINGS"
+                  styles:     style_temp
+                  text_font:  font_regular
+                  align:      TOP_LEFT
+                  text_align: left
+                  pad_all:    0
+                  pad_top:    5
+                  width:      480
+
+     # - "\U000F08BF" # signal no api
+     # - "\U000F08BC" # signal 30%
+     # - "\U000F08BD" # signal 60%
+     # - "\U000F08BE" # signal 100%
+     # - "\U000F0783" # signal no wifi
+     # - "\U000F0599" # sun lux auto
+              # Speaker
+              - button:
+                  height:    80
+                  checkable: true
+                  id:        lvgl_button_mute_speaker
+                  widgets:
+                    - label:
+                        id:        lvgl_icon_mute_speaker
+                        text_font: icon_switch
+                        align:     TOP_MID
+                        text:     "\U000F057E"
+                    - label:
+                        align: BOTTOM_MID
+                        text: "SPEAKER"
+                        long_mode: dot
+                        text_font:  fontcelsius_small
+                  # remove when use sdl display      
+                  #on_value:
+                  #  then:
+                  #    - if: 
+                  #        condition:
+                  #          lambda: return x;
+                  #          #lambda: if (id(speaker_media_player)->is_muted()) {
+                  #        then:                           
+                  #          - lambda: |-
+                  #              id(speaker_media_player)
+                  #                ->make_call()
+                  #                .set_command(media_player::MediaPlayerCommand::MEDIA_PLAYER_COMMAND_UNMUTE)
+                  #                .perform();
+                  #        else:
+                  #          - lambda: |-
+                  #              id(speaker_media_player)
+                  #                ->make_call()
+                  #                .set_command(media_player::MediaPlayerCommand::MEDIA_PLAYER_COMMAND_MUTE)
+                  #                .perform();
+                   
+              # Microphone
+              - button:
+                  height:    80
+                  checkable: true
+                  id:        lvgl_button_mute_mic
+                  widgets:
+                    - label:
+                        id:        lvgl_icon_mute_mic
+                        text_font: icon_switch
+                        align:     TOP_MID
+                        text:     "\U000F036C"
+                    - label:
+                        align: BOTTOM_MID
+                        text: "MICROPHONE"
+                        long_mode: dot
+                        text_font:  fontcelsius_small
+                  on_value:
+                    then:
+                      - if: 
+                          condition:
+                            lambda: return x;
+                          then:
+                            switch.turn_on:  microphone_mute
+                          else:
+                            switch.turn_off: microphone_mute
+
+              # Wifi            
+              - obj:
+                  height: 80
+                  width:  80
+                  border_width:  0
+                  outline_pad:   0
+                  bg_color:      0xa8a8a8
+                  bg_grad_color: 0x808080
+                  bg_grad_dir:   VER
+                  bg_opa:        80%
+                  #text_color:    0xF0F0F0
+                  #text_color:    0xE0E0E0
+                  radius:        5
+                  pad_all:       5
+                  shadow_opa:    TRANSP
+                  #checkable: true
+                  id: lvgl_button_wifi
+                  widgets:
+                    - label:
+                        id:            lvgl_icon_wifi
+                        text_font:     icon_switch
+                        align:         TOP_MID
+                        text:         "\U000F0783"
+                        text_color:    0xE0E0E0
+                    - label:
+                        id:            lvgl_wifi_meter
+                        align:         BOTTOM_MID
+                        text:          " "
+                        long_mode:     dot
+                        text_font:     fontcelsius_small
+                        text_color:    0xE0E0E0
+                          
+              # Illuminance
+              - button:
+                  height: 80
+                  checkable: true
+                  #pad_bottom: 15
+                  id: lvgl_button_lux
+                  widgets:
+                    - label:
+                        text_font: icon_switch
+                        align: TOP_MID
+                        text: "\U000F0599"
+                    - label:
+                        align: BOTTOM_MID
+                        text: "BRIGHTNESS"
+                        long_mode: dot
+                        text_font:  fontcelsius_small
+                  on_value:
+                    then:
+                      - if: 
+                          condition:
+                            lambda: return x;
+                          then:
+                            switch.turn_on:  brightness_auto
+                          else:
+                            switch.turn_off: brightness_auto
+              
+              - obj:
+                  width:          100%
+                  height:         50
+                  bg_opa:         TRANSP
+                  pad_all:        15
+                  scrollbar_mode: "OFF"
+                  id:             lvgl_brightness_obj
+                  widgets:
+                    - slider:
+                        id:         lvgl_brightness_display
+                        width:      300
+                        height:     20
+                        #value:      !lambda return int(id(backlight).current_values.get_brightness();
+                        #value:      !lambda return id(brightness);
+                        value:      100
+                        min_value:  15
+                        max_value:  100
+                        #on_release:
+                        #  - light.turn_on:
+                        #      id: display_backlight
+                        #      brightness: !lambda return x;
+
+
 #-------------------------------------------
 # old
 #------------------------------------------- 
 
-#key_collector:
+#key_collector:scrollbar_mode
 #  - id: pincode_reader
 #    source_id: keypad_matrix
 #    min_length: 4
@@ -5540,34 +6134,19 @@ lvgl:
 
 
 
-text:
-  - platform: template
-    id: text_sensor2
-    name: "Template text"
-    optimistic: true
-    #min_length: 0
-    #max_length: 100
-    mode: text
-
-#sensor:
-#  - platform: wifi_signal # Reports the WiFi signal strength/RSSI in dB
-#    name: "WiFi Signal dB"
-#    id: wifi_signal_db
-#    update_interval: 20s
-#    entity_category: "diagnostic"
-#    on_value: 
-#      then:
-#        - lvgl.label.update:
-#            id: wifi_label
-#            text: !lambda |-
-#              static char buf[10];
-#              snprintf(buf, 10, "%.0fdBm", id(wifi_signal_db).get_state());
-#              return buf;
+#text:
+#  - platform: template
+#    id: text_sensor2
+#    name: "Template text"
+#    optimistic: true
+#    #min_length: 0
+#    #max_length: 100
+#    mode: text
 
 #-------------------------------------------
 # LIGHTS
 #-------------------------------------------
-light:
+#light:
 #-------------------------------------------
 # LVGL - Led
 #-------------------------------------------
@@ -5599,50 +6178,11 @@ light:
 #              blue: 0%
 #              duration: 500ms
 
-#-------------------------------------------
-# NUMBERS
-#-------------------------------------------
-number:
-#  - platform: lvgl
-#    widget: lv_slider
-#    id: lvgl_slider_sensor
-#    name: LVGL Slider
-#  - platform: lvgl
-#    widget: lv_arc
-#    id: lvgl_arc_sensor
-#    name: LVGL Arc
-#  - platform: lvgl
-#    widget: lv_bar
-#    id: lvgl_bar_sensor
-#    name: LVGL Bar
-#    on_value:
-#      then:
-#        - if:
-#            condition:
-#              number.in_range:
-#                id: lvgl_arc_sensor
-#                below: 50
-#            then:
-#              - lvgl.slider.update:
-#                  id: lv_slider
-#                  knob:
-#                    bg_color: 0xFF0000
-#              - lvgl.img.update:
-#                  id: lv_img
-#                  src: cat_image
-#            else:
-#              - lvgl.slider.update:
-#                  id: lv_slider
-#                  knob:
-#                    bg_color: 0x00FF00
-#              - lvgl.img.update:
-#                  id: lv_img
-#                  src: dog_img
 
 #-------------------------------------------
 # BINARY SENSORS
 #-------------------------------------------
-binary_sensor:
+#binary_sensor:
 #  - platform: lvgl
 #    name: Pressbutton
 #    widget: lv_page1_button
@@ -5677,7 +6217,7 @@ binary_sensor:
 #-------------------------------------------
 # SELECTS
 #-------------------------------------------
-select:
+#select:
 #  - platform: lvgl
 #    widget: lv_dropdown
 #    name: LVGL Dropdown
@@ -5688,7 +6228,7 @@ select:
 #-------------------------------------------
 # SWITCHES
 #-------------------------------------------
-switch:
+#switch:
   #- platform: lvgl
   #  name: Button switch
   #  widget: lv_button
@@ -5714,38 +6254,38 @@ font:
   - file: 'fonts/font-bd-large.ttf'
     id: timefont
     size: 150
-    bpp: 2
+    bpp: 2 # bits per pixel 1, 2, 4 and 8 (higher value means better quality), affects memory size.
     glyphs: '1234567890:'
 
   - file: 'fonts/BebasNeuePro-Bold.ttf'
     id: fonttemp
     size: 72
     bpp: 2
-    glyphs: '1234567890-.'
+    glyphs: '1234567890-. °C'
 
   - file: 'fonts/BebasNeuePro-Bold.ttf'
     id: fonttemp_mid
     size: 64
     bpp: 2
-    glyphs: '1234567890-.'
+    glyphs: '123 4567890-.'
     
   - file: 'fonts/BebasNeuePro-Bold.ttf'
     id: fonttemp_mid2
     size: 50
     bpp: 2
-    glyphs: '1234567890/'
+    glyphs: '-1234567890/. °C'
     
   - file: 'fonts/BebasNeuePro-Bold.ttf'
     id: fontcelsius
     size: 30
     bpp: 2
-    glyphs: '#1234567890.-Fels:°C% '
+    glyphs: '#1234567890.-NPSFUVabdeiklnorstuv:°C% /\Šľ?'
 
   - file: 'fonts/BebasNeuePro-Regular.ttf'
-    id: fontcelsius_min
+    id: font_regular
     size: 24
     bpp: 2
-    glyphs: '~-°/.0123456789ABCDEGHIKLMNOQPRSTUVWYabcdegiklmnopsuvw³₂?µ '
+    glyphs: '~-_:°/.0123456789ABCDEFGHIJKLMNOQPRSTUVWXYZabcdefghijklmnoprstuvwxyz³₂?µä, ĎýÝžŽášŠľóČčíĽúéťňďôÍÚŤ%()' 
     extras:
       - file: 'fonts/materialdesignicons-webfont.ttf'
         glyphs: [
@@ -5753,7 +6293,7 @@ font:
           "\U000F035D", # arrow down
           "\U000F036F", # mic          listening
           "\U000F07F6", # bubble       thinking
-          "\U000F057E", # speaker      replying
+          #"\U000F057E", # speaker      replying
           "\U000F043B", # radio tower  idle
           "\U000F0028", # alert-circle error
           
@@ -5761,21 +6301,62 @@ font:
           "\U000F0093", # flask formaldehyde
           "\U000F0D7C", # grain pm
           "\U000F013B", # chemical weapon tvoc
+          # menu button
+          "\U000F035E", # arrow left
+          "\U000F02DC", # home
+          "\U000F035F", # arrow right
+          "\U000F050F", # thermometer
+          "\U000F0F33", # weather_icon
+          "\U000F12A8", # switch_icon
+          "\U000F001B", # climate_icon
+          "\U000F19A1", # vacuum_icon 
+          "\U000F03C8", # aiq_icon   
+          "\U000F057E", # voice_icon 
+          "\U000F0493", # settings_icon
+          "\U000F0DDB"  # monitor lock
           ]
-          
+                   
   - file: 'fonts/BebasNeuePro-Bold.ttf'
+  #- file: "gfonts://Roboto"
     id: fontcelsius_small
     size: 18
     bpp: 2
     glyphs:
-      ['&', '@', '!', ',', '.', '"', '%', '(', ')', '+', '-', '–', '_', ':', '°', '0', '~', '„', '“', '?',
+      ['&', '@', '!', ',', '.', '"', '%', '(', ')', '+', '-', '–', '_', ':', '°', '0', '~', '„', '“', '?', '’',
        '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
        'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
        'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', 'a', 'b', 'c', 'd', 'e', 'f',
        'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
        'u', 'v', 'w', 'x', 'y', 'z','å', 'ä', 'ö', '/', '\', ';','º','³',       
-       'µ', 'ý','Ý', ž, á, š, Š, ľ, ó, Č, č, í, Ľ, ú, é, ť, ň, ď, Ž, ô, Í, Ú, Ť, ŕ, ř,]
-
+       'µ', 'ý','Ý', ž, á, š, Š, ľ, ó, Č, č, í, Ľ, ú, é, ť, ň, ď, Ž, ô, Í, Ú, Ť, ŕ, ř, ĺ,]
+    extras:
+      - file: 'fonts/materialdesignicons-webfont.ttf'
+        glyphs: [
+          "\U000F0238", # FIRE
+          "\U000F006A", # AUTO
+          "\U000F0906", # OFF
+          "\U000F035D", # ARROW DOWN
+          "\U000F058E", # DRY
+          "\U000F0717", # COOL
+          "\U000F0210", # FAN
+          "\U000F0079", # mdi-battery (full)
+          
+          "\U000F00E2", # SWEEPING
+          "\U000F01AB", # MOPPING
+          "\U000F12E5", # SWEEPING AND MOPPING
+          "\U000F1472", # QUIET
+          "\U000F1473", # STANDARD
+          "\U000F1474", # STRONG
+          "\U000F059D", # TURBO
+          ]
+          
+  - file: 'fonts/BebasNeuePro-Regular.ttf'
+  #- file: "gfonts://Roboto"
+    id: font_regular_small
+    size: 18
+    bpp: 2
+    glyphs: 'PFcCrUVIGustMeanRiflSow:1234567890-.%km/hgΩ³µv '
+    
     #glyphs: '#1234567890.-Fels:°C '
     extras:
       - file: 'fonts/materialdesignicons-webfont.ttf'
@@ -5797,118 +6378,35 @@ font:
           "\U000F1474", # STRONG
           "\U000F059D", # TURBO
           ]
-
-          
-  - file: 'fonts/BebasNeuePro-Regular.ttf'
-    id: font_regular
-    size: 18
-    bpp: 2
-    glyphs: 'PFcCrUVIGustMeanRiflSow:1234567890-.%km/hgΩ³µv '
-        
-  - file: "gfonts://Roboto"
+       
+  #- file: "gfonts://Roboto"
+  - file:  'fonts/materialdesignicons-webfont.ttf'
     id: roboto20
     size: 20
     bpp: 1
-    extras:
-      - file: 'fonts/materialdesignicons-webfont.ttf'
-        glyphs: [
-          #"\U000F004B",
-          #"\U0000f0ed",
-          #"\U000F006E",
-          #"\U000F012C",
-          #"\U000F179B",
-          #"\U000F0748",
-          #"\U000F1A1B",
-          #"\U000F02DC",
-          #"\U000F0A02",
-          #"\U000F035F",
-          #"\U000F0156",
-          #"\U000F0C5F", 
-          #"\U000f0084",
-          #"\U000f0091",
-          "\U000F08BE", # wifi status
-          
-          "\U000F007A", # mdi-battery-10
-          "\U000F007B", # mdi-battery-20
-          "\U000F007C", # mdi-battery-30
-          "\U000F007D", # mdi-battery-40
-          "\U000F007E", # mdi-battery-50
-          "\U000F007F", # mdi-battery-60
-          "\U000F0080", # mdi-battery-70
-          "\U000F0081", # mdi-battery-80
-          "\U000F0082", # mdi-battery-90
-          "\U000F0079", # mdi-battery (full)
-          "\U000F008E", # mdi-battery-outline
-          "\U000F0091", # mdi-battery-unknown
-          "\U000F05A9", # wifi
-          
-          ]
-          
-  - file: "gfonts://Roboto"
-    id: roboto10
-    size: 25
-    bpp: 2           # bits per pixel 1, 2, 4 and 8 (higher value means better quality), affects memory size.
-    #glyphs: ????
-    extras:
-      - file: 'fonts/materialdesignicons-webfont.ttf'
-        glyphs: [
-          "\U000F035E", # arrow left
-          "\U000F02DC", # home
-          "\U000F035F", # arrow right
-          "\U000F050F", # thermometer
-          "\U000F0F33", # weather_icon
-          "\U000F12A8", # switch_icon
-          "\U000F001B", # climate_icon
-          "\U000F19A1", # vacuum_icon 
-          "\U000F03C8", # aiq_icon   
-          "\U000F057E", # voice_icon 
-          "\U000F0493"  # settings_icon
-          ]
-          
-  #- file: "gfonts://Helvetica"
-  #  id: helv20
-  #  bpp: 2
-  #  size: 20
-  #  extras:
-  #    - file: 'fonts/materialdesignicons-webfont.ttf'
-  #      glyphs: [
-  #        "\U000F004B",
-  #        #"\U0000f0ed",
-  #        "\U000F006E",
-  #        "\U000F012C",
-  #        "\U000F179B",
-  #        "\U000F0748",
-  #        "\U000F1A1B",
-  #        "\U000F02DC",
-  #        "\U000F0A02",
-  #        "\U000F035F",
-  #        "\U000F0156",
-  #        "\U000F0C5F", 
-  #        "\U000f0084",
-  #        "\U000F007A", # mdi-battery-10
-  #        "\U000F007B", # mdi-battery-20
-  #        "\U000F007C", # mdi-battery-30
-  #        "\U000F007D", # mdi-battery-40
-  #        "\U000F007E", # mdi-battery-50
-  #        "\U000F007F", # mdi-battery-60
-  #        "\U000F0080", # mdi-battery-70
-  #        "\U000F0081", # mdi-battery-80
-  #        "\U000F0082", # mdi-battery-90
-  #        "\U000F0079", # mdi-battery (full)
-  #        "\U000F008E", # mdi-battery-outline
-  #        "\U000F0091", # mdi-battery-unknown
-  #        "\U000F05A9", # wifi
-  #        ]
-    
+    #extras:
+    #  - file: 'fonts/materialdesignicons-webfont.ttf'
+    glyphs: [
+      "\U000F08BE", # wifi status
+      
+      "\U000F007A", # mdi-battery-10
+      "\U000F007B", # mdi-battery-20
+      "\U000F007C", # mdi-battery-30
+      "\U000F007D", # mdi-battery-40
+      "\U000F007E", # mdi-battery-50
+      "\U000F007F", # mdi-battery-60
+      "\U000F0080", # mdi-battery-70
+      "\U000F0081", # mdi-battery-80
+      "\U000F0082", # mdi-battery-90
+      "\U000F0079", # mdi-battery (full)
+      "\U000F008E", # mdi-battery-outline
+      "\U000F0091", # mdi-battery-unknown
+      "\U000F05A9", # wifi
+      
+      ]
+                        
   - file: 'fonts/BebasNeuePro-Bold.ttf'
-    id: bahnshrift32
-    size: 32
-    bpp: 4
-    glyphs:
-      [Pondel kUtrSaŠvibNľ1234567890. ]
-       
-#  - file: 'fonts/steelfish.ttf'
-  - file: 'fonts/BebasNeuePro-Bold.ttf'
+  #- file: "gfonts://Roboto"
     id: bahnshrift24
     size: 24
     bpp: 2
@@ -5950,6 +6448,115 @@ font:
       - "\U000F0F38" # mdi-weather-tornado
       - "\U000F059D" # mdi-weather-windy
       - "\U000F059E" # mdi-weather-windy-variant
+
+  - file: 'fonts/WeatherIcons.ttf'
+    id: fontweater_large_test
+    size: 84
+    bpp: 4
+    glyphs:
+      - "\U0000004D" # mdi-weather-cloudy 100%
+      - "\U00000061" # mdi-weather-cloudy 50%
+      - "\U0000004E" # mdi-weather-fog
+      - "\U00000062" # mdi-weather-hail
+      - "\U0000004F" # mdi-weather-hazy
+      - "\U0000006C" # mdi-weather-hurricane
+      - "\U00000069" # mdi-weather-lightning
+      - "\U00000050" # mdi-weather-lightning-rainy
+      - "\U00000064" # mdi-weather-night
+      - "\U00000065" # mdi-weather-night-partly-cloudy
+      - "\U00000066" # mdi-weather-partly-cloudy
+      - "\U00000051" # mdi-weather-partly-lightning
+      - "\U00000052" # mdi-weather-partly-rainy
+      - "\U00000053" # mdi-weather-partly-snowy
+      - "\U00000054" # mdi-weather-partly-snowy-rainy
+      - "\U00000055" # mdi-weather-pouring
+      - "\U00000067" # mdi-weather-rainy
+      - "\U00000068" # mdi-weather-snowy
+      - "\U00000058" # mdi-weather-snowy-heavy
+      #- "\U00000979" # mdi-weather-snowy-rainy
+      - "\U0000006A" # mdi-weather-sunny
+      #- "\U00000F37" # mdi-weather-sunny-alert
+      #- "\U000004E4" # mdi-weather-sunny-off
+      - "\U0000006B" # mdi-weather-sunset
+      #- "\U0000059B" # mdi-weather-sunset-down
+      #- "\U0000059C" # mdi-weather-sunset-up
+      #- "\U0000006C" # mdi-weather-tornado
+      - "\U00000056" # mdi-weather-windy
+      - "\U00000057" # mdi-weather-windy-variant
+    #extras:
+    #  - file: "gfonts://Roboto"
+    #    glyphs: ' '
+
+# Google weather no all icons
+  #- file: 'fonts/materialdesignicons-webfont.ttf'
+#  - file: 
+#      type: gfonts
+#      family: Material Symbols Outlined
+#      weight: 200
+#    id: fontweater_large_test
+#    size: 84
+#    bpp: 4
+#    glyphs:
+#      - "\U0000e2bd" # mdi-weather-cloudy
+#      - "\U0000e818" # mdi-weather-fog
+#      - "\U0000f67f" # mdi-weather-hail
+#      #- "\U00000F30" # mdi-weather-hazy
+#      - "\U0000f070" # mdi-weather-hurricane
+#      - "\U0000ebdb" # mdi-weather-lightning
+#      - "\U0000067E" # mdi-weather-lightning-rainy
+#      - "\U00000594" # mdi-weather-night
+#      - "\U00000F31" # mdi-weather-night-partly-cloudy
+#      - "\U00000595" # mdi-weather-partly-cloudy
+#      - "\U00000F32" # mdi-weather-partly-lightning
+#      - "\U00000F33" # mdi-weather-partly-rainy
+#      - "\U00000F34" # mdi-weather-partly-snowy
+#      - "\U00000F35" # mdi-weather-partly-snowy-rainy
+#      - "\U00000596" # mdi-weather-pouring
+#      - "\U00000597" # mdi-weather-rainy
+#      - "\U00000598" # mdi-weather-snowy
+#      - "\U00000F36" # mdi-weather-snowy-heavy
+#      - "\U0000067F" # mdi-weather-snowy-rainy
+#      - "\U00000599" # mdi-weather-sunny
+#      - "\U00000F37" # mdi-weather-sunny-alert
+#      - "\U000014E4" # mdi-weather-sunny-off
+#      - "\U0000059A" # mdi-weather-sunset
+#      - "\U0000059B" # mdi-weather-sunset-down
+#      - "\U0000059C" # mdi-weather-sunset-up
+#      - "\U00000F38" # mdi-weather-tornado
+#      - "\U0000059D" # mdi-weather-windy
+#      - "\U0000059E" # mdi-weather-windy-variant
+      
+#  - file: 
+#      type:   local
+#      path: 'fonts/materialdesignicons-webfont.ttf'
+#      weight: 100
+#    id: emoticon_font
+#    size: 58
+#    bpp: 4
+#    glyphs: 
+#    
+#      # emoticon AQI
+#      - "\U000F069C" # ˄̮ ˄ aqi good      
+#      - "\U000F01F5" # *̮ * aqi moderate
+#      - "\U000F01F6" # *-* aqi unhealthy sensitivity
+#      - "\U000F01F8" # *̯ * aqi unhealthy
+#      - "\U000F0F4D" # *D* aqi very unhealthy
+#      - "\U000F069B" # x-x aqi hazard
+
+  - file:
+      type: gfonts
+      family: Noto Emoji
+      #weight: 900
+    id: emoticon_font
+    size: 48
+    bpp: 2
+    glyphs:
+      - "😊"
+      - "🙂"
+      - "😐"
+      - "🙁"
+      - "😮"
+      - "😵"
       
   - file: 'fonts/materialdesignicons-webfont.ttf'
     id: fonticon_large
@@ -5958,35 +6565,35 @@ font:
     glyphs:
       - "\U000F070D" # vacuum
 
-  - file: 'fonts/materialdesignicons-webfont.ttf'
-    id: fontforecast
-    size: 30
-    bpp: 2
-    glyphs: &mdi-forecast-glyphs   
-      - "\U000F050F" # thermometer
-      - "\U000F059D" # windy
-      - "\U000F17FE" # sun uv
-      - "\U000F0597" # rain
-      - "\U000F04FE" # target
-      - "\U000F02DC" # home
-  - file: 'fonts/materialdesignicons-webfont.ttf'
-    id: fontforecast_large
-    size: 34
-    bpp: 2
-    glyphs: &mdi-forecast-glyphs-1  
-      #- "\U000F050F" # thermometer
-      #- "\U000F059D" # windy
-      #- "\U000F17FE" # sun uv
-      #- "\U000F0597" # rain
-      #- "\U000F04FE" # target
-      - "\U000F02DC" # home
-
+  #- file: 'fonts/materialdesignicons-webfont.ttf'
+  #  id: fontforecast
+  #  size: 30
+  #  bpp: 2
+  #  glyphs: &mdi-forecast-glyphs   
+  #    - "\U000F050F" # thermometer
+  #    - "\U000F059D" # windy
+  #    - "\U000F17FE" # sun uv
+  #    - "\U000F0597" # rain
+  #    - "\U000F04FE" # target
+  #    - "\U000F02DC" # home
+      
+  #- file: 'fonts/materialdesignicons-webfont.ttf'
+  #  id: fontforecast_large
+  #  size: 34
+  #  bpp: 2
+  #  glyphs: &mdi-forecast-glyphs-1  
+  #    #- "\U000F050F" # thermometer
+  #    #- "\U000F059D" # windy
+  #    #- "\U000F17FE" # sun uv
+  #    #- "\U000F0597" # rain
+  #    #- "\U000F04FE" # target
+  #    - "\U000F02DC" # home
 
   - file: 'fonts/materialdesignicons-webfont.ttf'
     id: icon_switch
-    size: 38
+    size: 34
     bpp: 2
-    glyphs: 
+    glyphs: &mdi-forecast-glyphs-1 
       - "\U000F04A6" # kitchen
       - "\U000F02E3" # bedroom
       - "\U000F1818" # bathroom
@@ -5998,12 +6605,17 @@ font:
       - "\U000F07F4" # TV
       - "\U000F0606" # filter
       - "\U000F184D" # watering
+      - "\U000F1A59" # kotol
+      - "\U000F1A57" # boiler
       
       - "\U000F01A2" # light living
       - "\U000F1356" # light tv
       - "\U000F179B" # light dres
       - "\U000F11E1" # light bar
       - "\U000F0D63" # light hall
+      - "\U000F0289" # light bedroom
+      - "\U000F0E95" # light pantry
+      - "\U000F12BA" # light pool
       
       - "\U000F0F52" # food
       - "\U000F15C8" # shoes
@@ -6018,6 +6630,17 @@ font:
       - "\U000F034E" # location
       - "\U000F02DC" # home
       
+      - "\U000F057E" # speaker
+      - "\U000F0E08" # speaker mute
+      - "\U000F036C" # microphone
+      - "\U000F036D" # microphone mute
+      - "\U000F08BF" # signal no api
+      - "\U000F08BC" # signal 30%
+      - "\U000F08BD" # signal 60%
+      - "\U000F08BE" # signal 100%
+      - "\U000F0783" # signal no wifi
+      - "\U000F0599" # sun lux auto
+      
 #-------------------------------------------
 # IMAGES
 #------------------------------------------- 
@@ -6029,102 +6652,184 @@ image:
     type: RGB565
 
   # FORECAST
+# - file: image/forecast/partlycloudy.png
+#   id: img_partlycloudy
+#   resize: 200x200
+#   type: RGB565
+#   use_transparency: true
+# - file: image/forecast/rainy.png
+#   id: img_rainy
+#   resize: 200x200
+#   type: RGB565
+#   use_transparency: true
+# - file: image/forecast/sunny.png
+#   id: img_sunny
+#   resize: 200x200
+#   type: RGB565
+#   use_transparency: true
+# - file: image/forecast/lightning.png
+#   id: img_lightning
+#   resize: 200x200
+#   type: RGB565
+#   use_transparency: true
+# - file: image/forecast/lightning-rainy.png
+#   id: img_lightning_rainy
+#   resize: 200x200
+#   type: RGB565
+#   use_transparency: true
+# - file: image/forecast/pouring.png
+#   id: img_pouring
+#   resize: 200x200
+#   type: RGB565
+#   use_transparency: true
+# - file: image/forecast/snowy-rainy.png
+#   id: img_snowy_rainy
+#   resize: 200x200
+#   type: RGB565
+#   use_transparency: true
+# - file: image/forecast/snowy.png
+#   id: img_snowy
+#   resize: 200x200
+#   type: RGB565
+#   use_transparency: true
+# - file: image/forecast/fog.png
+#   id: img_fog
+#   resize: 200x200
+#   type: RGB565
+#   use_transparency: true
+# - file: image/forecast/hurricane.png
+#   id: img_hurricane
+#   resize: 200x200
+#   type: RGB565
+#   use_transparency: true
+# - file: image/forecast/night-partly-cloudy.png
+#   id: img_night_partly_cloudy
+#   resize: 200x200
+#   type: RGB565
+#   use_transparency: true
+# - file: image/forecast/clear-night.png
+#   id: img_clear_night
+#   resize: 200x200
+#   type: RGB565
+#   use_transparency: true
+# - file: image/forecast/cloudy.png
+#   id: img_cloudy
+#   resize: 200x200
+#   type: RGB565
+#   use_transparency: true
+# - file: image/forecast/windy.png
+#   id: img_windy
+#   resize: 200x200
+#   type: RGB565
+#   use_transparency: true
+# - file: image/forecast/windy-variant.png
+#   id: img_windy_variant
+#   resize: 200x200
+#   type: RGB565
+#   use_transparency: true
+# - file: image/forecast/hail.png
+#   id: img_hail
+#   resize: 200x200
+#   type: RGB565
+#   use_transparency: true
+    
   - file: image/forecast/partlycloudy.png
     id: img_partlycloudy
     resize: 200x200
     type: RGB565
-    use_transparency: true
+    transparency: alpha_channel
   - file: image/forecast/rainy.png
     id: img_rainy
     resize: 200x200
     type: RGB565
-    use_transparency: true
+    transparency: alpha_channel
   - file: image/forecast/sunny.png
     id: img_sunny
     resize: 200x200
     type: RGB565
-    use_transparency: true
+    transparency: alpha_channel
   - file: image/forecast/lightning.png
     id: img_lightning
     resize: 200x200
     type: RGB565
-    use_transparency: true
+    transparency: alpha_channel
   - file: image/forecast/lightning-rainy.png
     id: img_lightning_rainy
     resize: 200x200
     type: RGB565
-    use_transparency: true
+    transparency: alpha_channel
   - file: image/forecast/pouring.png
     id: img_pouring
     resize: 200x200
     type: RGB565
-    use_transparency: true
+    transparency: alpha_channel
   - file: image/forecast/snowy-rainy.png
     id: img_snowy_rainy
     resize: 200x200
     type: RGB565
-    use_transparency: true
+    transparency: alpha_channel
   - file: image/forecast/snowy.png
     id: img_snowy
     resize: 200x200
     type: RGB565
-    use_transparency: true
+    transparency: alpha_channel
   - file: image/forecast/fog.png
     id: img_fog
     resize: 200x200
     type: RGB565
-    use_transparency: true
+    transparency: alpha_channel
   - file: image/forecast/hurricane.png
     id: img_hurricane
     resize: 200x200
     type: RGB565
-    use_transparency: true
+    transparency: alpha_channel
   - file: image/forecast/night-partly-cloudy.png
     id: img_night_partly_cloudy
     resize: 200x200
     type: RGB565
-    use_transparency: true
+    transparency: alpha_channel
   - file: image/forecast/clear-night.png
     id: img_clear_night
     resize: 200x200
     type: RGB565
-    use_transparency: true
+    transparency: alpha_channel
   - file: image/forecast/cloudy.png
     id: img_cloudy
     resize: 200x200
     type: RGB565
-    use_transparency: true
+    transparency: alpha_channel
   - file: image/forecast/windy.png
     id: img_windy
     resize: 200x200
     type: RGB565
-    use_transparency: true
+    transparency: alpha_channel
   - file: image/forecast/windy-variant.png
     id: img_windy_variant
     resize: 200x200
     type: RGB565
-    use_transparency: true
+    transparency: alpha_channel
   - file: image/forecast/hail.png
     id: img_hail
     resize: 200x200
     type: RGB565
-    use_transparency: true
+    transparency: alpha_channel
   
   # WEATHER MAP
   #- file: https://api.weather.com/v2/maps/dynamic?geocode=48.15,17.30&h=400&w=400&lod=8&apiKey=e1f10a1e78da46f5b10a1e78da96f525&product=twcRadarMosaic,648
-  - file: http://192.168.31.212:8123/local/esphome/weather_map.png
+  - file: http://192.168.31.212:8123/local/esphome/weather_map.jpg
     id: img_weathermap
     type: RGB565
     #resize: 230x400
     #use_transparency: true
   #- file: https://images.lightningmaps.org/blitzortung/europe/index.php?map=sat_europe_mpe
-  - file: http://192.168.31.212:8123/local/esphome/lightining_map.png
+  - file: http://192.168.31.212:8123/local/esphome/lightining_map.jpg
     id: img_lightiningmap
     #resize: 512x362
-    #type: RGB565
-    
-  - file: http://192.168.31.212:8123/local/esphome/vacuum_snap.png
-    id: img_vacuum_snap
-    resize: 160x133
     type: RGB565
-    use_transparency: true
+    
+  - file: http://192.168.31.212:8123/local/esphome/vacuum_snap.jpg
+    id: img_vacuum_snap
+    #resize: 160x133
+    type: RGB565
+    #use_transparency: true
+    transparency: chroma_key
