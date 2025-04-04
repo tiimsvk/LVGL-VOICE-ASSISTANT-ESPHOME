@@ -564,8 +564,6 @@ esphome:
     #- priority: 100
     - priority: -250
       then:
-        #- ds1307.read_time:
-        #- delay: 50ms
         - lvgl.label.update:
             id: label_time_hours
             text:
@@ -576,8 +574,6 @@ esphome:
             text:
               format: "%02d"
               args: ['id(my_time).now().minute']
-    #- delay: 5s
-    #- lvgl.widget.hide: boot_screen
 
 #-------------------------------------------
 # ESP MCU SETTINGS
@@ -668,7 +664,7 @@ psram:
 logger:
   #baud_rate: 0
   tx_buffer_size: 256
-  level: VERBOSE
+  level: DEBUG 
   # hardware_uart: USB_SERIAL_JTAG
   hardware_uart : UART0 
   # HW UART ENABLE 
@@ -679,11 +675,13 @@ logger:
   #  # [00:00:00][W][component:204]: Component xxxxxx took a long time for an operation (x.xx s).
   #  # [00:00:00][W][component:205]: Components should block for at most 20-30ms.
   #  # Source: https://github.com/esphome/issues/issues/4717
-    lvgl:                      ERROR
+  #  lvgl:                      ERROR
   #  homeassistant.text_sensor: WARN
   #  text_sensor:               WARN
     component:                 ERROR
     ledc.output:                WARN
+    homeassistant.text_sensor:  WARN
+   
   #  sm300d2:                   WARN
     
 #-------------------------------------------
@@ -700,8 +698,9 @@ api:
           - lvgl.widget.show: lvgl_online_status
           - component.update: select_room
           #- component.update: sm300d2_aiq
-          
-          - micro_wake_word.start:
+          #- delay: 500ms
+          #- lambda: ESP_LOGI("script", "MIRCOWAKEWORLD START");
+          #- micro_wake_word.start:
           
   on_client_disconnected:
     then:
@@ -826,37 +825,7 @@ packages:
   #    path: custom_component
   #  components: [ audio, i2s_audio, speaker]
   #  refresh: 0s
-
-  #-------------------------------------------
-  # ONLINE IMAGE
-  #-------------------------------------------
-  #- source: github://pr#7908
-  #  refresh: 0s
-  #  components: [ image ]
-      
-  #- source: github://pr#7882
-  ##- source: github://pr#8212
-  #  refresh: 0s
-  #  components: [ online_image ]
-  #- source: github://pr#8212
-  #  refresh: 0s
-  #  components: [ online_image ]
-  #- source: 
-  #    type: git
-  #    url: https://github.com/esphome/esphome
-  #    ref: 2025.2.0b1
-  #  refresh: 0s
-  #  components: [ online_image, image ]
-  #- source: 
-  #    type: local
-  #    path: custom_component
-  #  components: [ online_image ]
-  #  refresh: 0s
-
-  #- source: github://guillempages/esphome@online_image_resize_fix
-  #  refresh: 0s
-  #  components: [image, online_image ]
-      
+    
 #-------------------------------------------
 # ONLINE IMAGE
 #-------------------------------------------
@@ -992,10 +961,13 @@ microphone:
     adc_type:        external
     i2s_din_pin:    $mic_din_pin # SD
     channel:         left
-    pdm:             false
     i2s_audio_id:    i2s_in
     bits_per_sample: 32bit
     sample_rate:     16000
+    #on_data:
+    #  - logger.log:
+    #      format: "Received %d bytes"
+    #      args: ['x.size()']
     
 #-------------------------------------------
 # MEDIA PLAYER
@@ -1075,8 +1047,8 @@ micro_wake_word:
   microphone:        mic_id  
   vad:                                 # Voice Activity Detection model 
   on_wake_word_detected:
-    - voice_assistant.start:
-        wake_word: !lambda return wake_word;
+    #- voice_assistant.start:
+    #    wake_word: !lambda return wake_word;
     # If media played pause
     - if:
         condition:
@@ -1239,9 +1211,9 @@ voice_assistant:
           voice_assistant.is_running:
     - micro_wake_word.start:
     
-  on_client_connected:
-    - delay: 10s
-    - micro_wake_word.start:
+  #on_client_connected:
+    #- delay: 10s
+    #- micro_wake_word.start:
   on_client_disconnected:
     - voice_assistant.stop:
 
@@ -2271,6 +2243,7 @@ switch:
   - platform: template
     name: "${friendly_name} Antiburn"
     id: switch_antiburn
+    #internal: true
     icon: mdi:television-shimmer
     optimistic: true
     entity_category: "config"
@@ -2302,7 +2275,11 @@ switch:
     icon:         mdi:microphone-off
     on_turn_on:
       #- lambda: id(voice_assist).set_use_wake_word(true);
-      - micro_wake_word.start:
+      #- if:
+      #    condition:
+      #      api.connected:
+      #    then:
+      #      - micro_wake_word.start:
       #- if:
       #    condition:
       #      not:
@@ -4406,9 +4383,20 @@ interval:
 #-------------------------------------------
 # BUTTONS
 #------------------------------------------- 
-#button:
-#  - platform: restart
-#    name: "${friendly_name} Reset"
+button:
+  - platform: restart
+    name: "${friendly_name} Reset"
+  - platform: template
+    name: test micro
+    on_press:
+      then: 
+        - voice_assistant.stop:
+        - delay: 1s
+        - micro_wake_word.start:
+  - platform: template
+    name: test bootscreen
+    on_press:
+      - lvgl.widget.hide: boot_screen
 
 #-------------------------------------------
 # NUMBERS
