@@ -337,7 +337,7 @@ substitutions:
    # Power consumption: standby 4µA; measure 980µA
 
  # ----- SM300D2 7-in-1 Air Quality  -----
-  # Modification: on board resistor divider remove GND 47k and 100ohm RX to uart bad read value 
+  # Modification: on board resistor divider remove GND 47k and 100ohm (R3,7,6) RX and TX to uart bad read value 
  
   # Sensor 	Range 	Accuracy
   # CO2 	400 - 5000 ppm 	± 50ppm
@@ -481,12 +481,12 @@ spi:
     clk_pin:  "$spi_clk_pin"
     mosi_pin: "$spi_mosi_pin"
 
-#uart:
-#  #tx_pin:  "$uart_tx_pin"
-#  rx_pin:
-#    number: "$uart_rx_pin"
-#    mode:    INPUT_PULLDOWN
-#  baud_rate: 9600
+uart:
+  #tx_pin:  "$uart_tx_pin"
+  rx_pin:
+    number: "$uart_rx_pin"
+    mode:    INPUT_PULLDOWN
+  baud_rate: 9600
 
 i2s_audio:
   # SPEAKER
@@ -586,19 +586,12 @@ esp32:
   framework:
     type: esp-idf
     #version: recommended
-    #version: 5.1.1
-    #platform_version: 6.4.0
-    # voice assitant freeze
     #version: 5.3.1
     #platform_version: 6.8.1
-    #version:          5.2.1
-    #platform_version: 6.6.0
     sdkconfig_options:
-      #CONFIG_ESP32_S3_BOX_3_BOARD: "y"
       CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
       CONFIG_ESP32S3_DATA_CACHE_32KB:      "y"
       CONFIG_ESP32S3_DATA_CACHE_LINE_64B:  "y"
-      #CONFIG_AUDIO_BOARD_CUSTOM:           "y"
       CONFIG_SPIRAM_FETCH_INSTRUCTIONS:    "y"
       CONFIG_SPIRAM_RODATA:                "y"
       
@@ -653,6 +646,9 @@ esp32:
       CONFIG_COMPILER_OPTIMIZATION_PERF: "y"
       CONFIG_IDF_EXPERIMENTAL_FEATURES:  "y"
       CONFIG_BOOTLOADER_COMPILER_OPTIMIZATION_SIZE: "y"
+      
+      CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
+      CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
 
 psram:
   mode: octal
@@ -662,11 +658,11 @@ psram:
 # LOGGER
 #-------------------------------------------
 logger:
-  #baud_rate: 0
-  tx_buffer_size: 256
+  baud_rate: 0
+  #tx_buffer_size: 256
+  #hardware_uart : UART0
   level: DEBUG 
   # hardware_uart: USB_SERIAL_JTAG
-  hardware_uart : UART0 
   # HW UART ENABLE 
    # GPIO43-U0_TXD 
    # GPIO44-U0_RXD
@@ -675,10 +671,10 @@ logger:
   #  # [00:00:00][W][component:204]: Component xxxxxx took a long time for an operation (x.xx s).
   #  # [00:00:00][W][component:205]: Components should block for at most 20-30ms.
   #  # Source: https://github.com/esphome/issues/issues/4717
+    component:                 ERROR
   #  lvgl:                      ERROR
   #  homeassistant.text_sensor: WARN
   #  text_sensor:               WARN
-    component:                 ERROR
     ledc.output:                WARN
     homeassistant.text_sensor:  WARN
    
@@ -700,7 +696,7 @@ api:
           #- component.update: sm300d2_aiq
           #- delay: 500ms
           #- lambda: ESP_LOGI("script", "MIRCOWAKEWORLD START");
-          #- micro_wake_word.start:
+          - micro_wake_word.start:
           
   on_client_disconnected:
     then:
@@ -740,7 +736,7 @@ packages:
   
 #-------------------------------------------
 # EXTERNAL AND CUSTOM COMPONENT
-#external_components:
+# external_components:
 #  - source: github://pr#8444
 #    components: [lvgl]
   #-------------------------------------------
@@ -753,6 +749,7 @@ packages:
   #    type: local
   #    path: custom_component
   #  components:
+  #    - audio
   #    - st7701s
   #    - rpi_dpi_rgb
 
@@ -796,36 +793,6 @@ packages:
       #- voice_kit
    # refresh: 0s
   
-  # OLD CONFIG
-  #- source: github://pr#5230 # https://github.com/esphome/esphome/pull/5230
-  #  components:
-  #    - esp_adf 
-  #  refresh: 0s
-
-  #- source: github://pr#7672
-  #  components:
-  #    - audio
-  #    - speaker
-  #    - i2s_audio
-  #    - speaker
-  #    - media_player
-  #    - voice_assistant
-  #  refresh: 0s
-    
-  #- source:
-  #    type: git
-  #    url: https://github.com/mikey60/home-assistant-voice-pe
-  #    ref: dev
-  #  components:
-  #    - nabu_microphone
-  #  refresh: 0s
-  #- source: github://pr#7605
-  #- source: 
-  #    type: local
-  #    path: custom_component
-  #  components: [ audio, i2s_audio, speaker]
-  #  refresh: 0s
-    
 #-------------------------------------------
 # ONLINE IMAGE
 #-------------------------------------------
@@ -905,6 +872,15 @@ online_image:
 # https://github.com/esphome/esphome/pull/7672
 # https://tristam.ie/2024/1126/
 # https://github.com/esphome/home-assistant-voice-pe
+
+# EDIT:
+# \\wsl.localhost\Ubuntu\home\tiim\esphome\lib\python3.12\site-packages\esphome\components\audio
+# audio_reader.cpp
+# static const uint32_t CONNECTION_TIMEOUT_MS = 10000; //5000
+# fixed timeout error log: 
+# [esp-idf:000][ann_read]: W (55694) HTTP_CLIENT: Connection timed out before data was ready!  
+# [E][speaker_media_player.pipeline:112]: Media reader encountered an error: ESP_FAIL
+# See discord: https://discord.com/channels/429907082951524364/1357716658524786700/1357923266131656744
 #-------------------------------------------
 
 #-------------------------------------------
@@ -1522,7 +1498,9 @@ debug:
 # SENSORS
 #-------------------------------------------
 sensor:
-
+ #-------------------------------------------
+ # Debug Heap Free
+ #-------------------------------------------
   - platform: debug
     free:
       name: "Heap Free"
@@ -1541,10 +1519,40 @@ sensor:
     #  name: "Loop Time"
     #psram:
     #  name: "Free PSRAM"
+ #-------------------------------------------
+ # Mermory size free
+ #-------------------------------------------     
+  #- platform: template
+  #  name: ${friendly_name} Free Mem Size
+  #  entity_category: diagnostic
+  #  unit_of_measurement: kb
+  #  accuracy_decimals: 0
+  #  lambda: |-
+  #    size_t freeValue = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
+  #    return freeValue / 1024.0;
+  #  update_interval: 30s
 
-  #-------------------------------------------
-  # Wifi signal component
-  #-------------------------------------------
+  #- platform: template
+  #  name: "PSRAM Free"
+  #  unit_of_measurement: "kb"
+  #  accuracy_decimals: 0
+  #  update_interval: 10s
+  #  entity_category: diagnostic
+  #  lambda: |-
+  #    return heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024.0;
+
+  #- platform: template
+  #  name: "Internal RAM Free"
+  #  unit_of_measurement: "kb"
+  #  accuracy_decimals: 0
+  #  update_interval: 10s
+  #  entity_category: diagnostic
+  #  lambda: |-
+  #    return heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024.0;
+  
+ #-------------------------------------------
+ # Wifi signal component
+ #-------------------------------------------
   - platform:            wifi_signal
     name:               "${friendly_name} Signal"
     update_interval:     320s
@@ -1616,9 +1624,9 @@ sensor:
                   id:    lvgl_icon_wifi
                   text: "\U000F0783"
               
-#-------------------------------------------
-# Temperature a humidity sensor - AHT10
-#-------------------------------------------
+ #-------------------------------------------
+ # Temperature a humidity sensor - AHT10
+ #-------------------------------------------
   - platform:            aht10
     variant:             AHT20
     id:                  aht10_component
@@ -1668,9 +1676,9 @@ sensor:
             hidden: false
     update_interval:   5s
 
-  #-------------------------------------------
-  # BH1750 GY-302 lux meter
-  #------------------------------------------- 
+ #-------------------------------------------
+ # BH1750 GY-302 lux meter
+ #------------------------------------------- 
   - platform:            bh1750
     name:           "${friendly_name} Illuminance"
     id:              ambient_light
@@ -1686,475 +1694,444 @@ sensor:
   #-------------------------------------------
   # SM300D2
   #------------------------------------------- 
-  #- platform:            sm300d2
-  #  id:              sm300d2_aiq
-  #  update_interval: 5s
-  #  #temperature:
-  #  #  name:         "${friendly_name} Temperature"
-  #  #  
-  #  #  filters:
-  #  #    - offset: -6.5
-  #  #    - lambda: |-
-  #  #        static float startup_time = millis() / 1000.0;
-  #  #        static bool is_initializing = id(is_poweron_start);
-  #  #      
-  #  #        if (is_initializing) {
-  #  #          float time_since_start = (millis() / 1000.0) - startup_time;
-  #  #          if (time_since_start >= 600) {
-  #  #            is_initializing = false;  // Po 10 minútach ukonči pridávanie offsetu
-  #  #            id(is_poweron_start) = false;
-  #  #            return x;  // Pôvodná hodnota
-  #  #          }
-  #  #          float adjustment = 3.5 * (1.0 - (time_since_start / 600.0)); // Lineárny pokles offsetu
-  #  #          return x + adjustment;
-  #  #        }
-  #  #      
-  #  #        return x;  // Po inicializácii vráť pôvodnú hodnotu
-  #  #    - quantile:
-  #  #        window_size: 4
-  #  #        send_every: 4
-  #  #        send_first_at: 3
-  #  #        quantile: .5
-  #  #    - lambda: 'return max((float)-10.0, x);' # No value lower than 0
-  #  #    - filter_out: -10.0
-  #
-  #  #humidity:
-  #  #  name: "${friendly_name} Humidity"
-  #  #  
-  #  #  filters:
-  #  #    - offset: 15.0
-  #  #    - quantile:
-  #  #        window_size: 4
-  #  #        send_every: 4
-  #  #        send_first_at: 3
-  #  #        quantile: .5
-  #  #    - lambda: 'return min((float)100.0, x);' # No value lower than 0
-  #  #    - filter_out: 100.0
-  #  #  accuracy_decimals: 1
-  #
-  #  co2:
-  #    name: "${friendly_name} CO2"
-  #    id:    aiq_co2
-  #    filters:
-  #      - quantile:
-  #          window_size: 4
-  #          send_every: 4
-  #          send_first_at: 1
-  #          quantile: .5
-  #      - lambda: 'return min((float)5001.0, x);' # No value lower than 0
-  #      - filter_out: 5001.0
-  #    on_value:
-  #      # value
-  #      - lvgl.label.update:
-  #          id: lvgl_aiq_co2
-  #          text:
-  #            format: "%.0f"
-  #            args: [ 'x' ]
-  #      # object show   
-  #      - lvgl.obj.update:
-  #          id: lvgl_obj_eco2
-  #          hidden: false
-  #
-  #      - component.update: aqi_climate
-  #      - component.update: aqi_voc
-  #      - delay: 50ms
-  #      - component.update: aqi_final
-  #  tvoc:
-  #    name: "${friendly_name} TVOC"
-  #    id: aiq_tvoc
-  #    filters:
-  #      - quantile:
-  #          window_size: 4
-  #          send_every: 4
-  #          send_first_at: 3
-  #          quantile: .5
-  #      - lambda: 'return min((float)2001.0, x);' # No value lower than 0
-  #      - filter_out: 2001.0
-  #    on_value:
-  #      # value
-  #      - lvgl.label.update:
-  #          id: lvgl_aiq_tvoc
-  #          text:
-  #            format: "%.0f"
-  #            args: [ 'x' ]
-  #      # object show   
-  #      - lvgl.obj.update:
-  #          id: lvgl_obj_tvoc
-  #          hidden: false
-  #  pm_2_5:
-  #    name: "${friendly_name} PM2.5"
-  #    id:    aiq_pm2_5
-  #    filters:
-  #      - quantile:
-  #          window_size: 4
-  #          send_every: 4
-  #          send_first_at: 1
-  #          quantile: .8
-  #      - lambda: 'return min((float)101.0, x);' # No value lower than 0
-  #      - filter_out: 101.0
-  #  pm_10_0:
-  #    name: "${friendly_name} PM10"
-  #    id:    aiq_pm10
-  #    filters:
-  #      - quantile:
-  #          window_size: 4
-  #          send_every: 4
-  #          send_first_at: 1
-  #          quantile: .8
-  #      - lambda: 'return min((float)101.0, x);' # No value lower than 0
-  #      - filter_out: 101.0
-  #  formaldehyde:
-  #    name: "${friendly_name} Formaldehyde"
-  #    id: aiq_ch2o
-  #    filters:
-  #      - quantile:
-  #          window_size: 4
-  #          send_every: 4
-  #          send_first_at: 1
-  #          quantile: .6
-  #      - lambda: 'return min((float)1001.0, x);' # No value lower than 0
-  #      - filter_out: 1001.0
-  #    on_value:
-  #      # value
-  #      - lvgl.label.update:
-  #          id: lvgl_aiq_ch2o
-  #          text:
-  #            format: "%.0f"
-  #            args: [ 'x' ]
-  #      # object show   
-  #      - lvgl.obj.update:
-  #          id: lvgl_obj_ch2o
-  #          hidden: false
-  #
-  ##-------------------------------------------
-  ## Air Quality Index
-  ##------------------------------------------- 
-  ## gases and particulare
-  #- platform:            template
-  #  name: "${friendly_name} AQI VOC"
-  #  id: aqi_voc
-  #  #internal: true
-  #  accuracy_decimals: 0
-  #  update_interval: never
-  #  lambda: |-
-  #    float pm25 = id(aiq_pm2_5).state;
-  #    float pm10 = id(aiq_pm10).state;
-  #    float co2 = id(aiq_co2).state;
-  #    float tvoc = id(aiq_tvoc).state;
-  #    float ch2o = id(aiq_ch2o).state;
-  #    
-  #    // Function to calculate AQI for each pollutant
-  #    auto calculate_aqi = [](float conc, float BP_Lo, float BP_Hi, int I_Lo, int I_Hi) {
-  #      return ((I_Hi - I_Lo) / (BP_Hi - BP_Lo)) * (conc - BP_Lo) + I_Lo;
-  #    };
-  #    // PM2.5 AQI
-  #    float aqi_pm25 = (pm25 <= 20)   ? calculate_aqi(pm25,    0,   20,   0, 100) :
-  #                     (pm25 <= 50)   ? calculate_aqi(pm25,   20,   50, 101, 200) :
-  #                     (pm25 <= 90)   ? calculate_aqi(pm25,   50,   90, 201, 300) :
-  #                     (pm25 <= 140)  ? calculate_aqi(pm25,   90,  140, 301, 400) :
-  #                                      calculate_aqi(pm25,  140,  200, 401, 500);
-  #    // PM10 AQI                     
-  #    float aqi_pm10 = (pm10 <= 30)   ? calculate_aqi(pm10,    0,   30,   0, 100) :
-  #                     (pm10 <= 75)   ? calculate_aqi(pm10,   30,   75, 101, 200) :
-  #                     (pm10 <= 125)  ? calculate_aqi(pm10,   75,  125, 201, 300) :
-  #                     (pm10 <= 200)  ? calculate_aqi(pm10,  125,  200, 301, 400) :
-  #                                      calculate_aqi(pm10,  200,  300, 401, 500);
-  #    // CO2 AQI
-  #    float aqi_co2 = (co2 <= 599)    ? calculate_aqi(co2,   400,  599,   0, 100) :
-  #                    (co2 <= 999)    ? calculate_aqi(co2,   600,  999, 101, 200) :
-  #                    (co2 <= 1499)   ? calculate_aqi(co2,  1000, 1499, 201, 300) :
-  #                    (co2 <= 2499)   ? calculate_aqi(co2,  1500, 2499, 301, 400) :
-  #                                      calculate_aqi(co2,  2500, 5000, 401, 500);
-  #    // TVOC AQI
-  #    float aqi_tvoc = (tvoc <= 199)  ? calculate_aqi(tvoc,    1,  199,   0, 100) :
-  #                     (tvoc <= 660)  ? calculate_aqi(tvoc,  200,  660, 101, 200) :
-  #                     (tvoc <= 1100) ? calculate_aqi(tvoc,  661, 1100, 201, 300) :
-  #                     (tvoc <= 1651) ? calculate_aqi(tvoc, 1101, 1651, 301, 400) :
-  #                                      calculate_aqi(tvoc, 1651, 2000, 401, 500);
-  #    // CH2O AQI (Formaldehyde)
-  #    float aqi_ch2o = (ch2o <= 50)   ? calculate_aqi(ch2o,    0,   50,   0, 100) :
-  #                     (ch2o <= 150)  ? calculate_aqi(ch2o,   51,  150, 101, 200) :
-  #                     (ch2o <= 300)  ? calculate_aqi(ch2o,  151,  300, 201, 300) :
-  #                     (ch2o <= 500)  ? calculate_aqi(ch2o,  301,  500, 301, 400) :
-  #                                      calculate_aqi(ch2o,  501, 1000, 401, 500);
-  #    
-  #    // The final AIQ is the highest value from all pollutants
-  #    return fmax(fmax(fmax(fmax(aqi_pm25, aqi_pm10), fmax(aqi_co2, aqi_tvoc)), aqi_ch2o), 0);
-  #    
-  ## Temperature and Humidity
-  #- platform:            template
-  #  name: "${friendly_name} AQI Climate"
-  #  id: aqi_climate
-  #  #internal: true
-  #  accuracy_decimals: 0
-  #  update_interval: never 
-  #  #lambda: |-
-  #  #    float temperature = id(aiq_temperature).state;
-  #  #    float humidity = id(aiq_humidity).state;
-  #  #    
-  #  #    // Tabuľka AQI podľa teploty a vlhkosti
-  #  #    const float aqi_table[9][14] = {
-  #  #      {500, 400, 300, 200, 200, 200, 200, 300, 400, 400, 500, 500, 500, 500},  // 90%
-  #  #      {400, 300, 100, 100, 100, 100, 100, 200, 300, 400, 400, 400, 500,   0},  // 80%
-  #  #      {400, 300, 200, 100,   0,   0,   0, 100, 200, 300, 400, 400, 500,   0},  // 70%
-  #  #      {400, 300, 200, 100,   0,   0,   0,  50, 100, 200, 300, 400, 500,   0},  // 60%
-  #  #      {400, 300, 200, 100,   0,   0,   0,   0,  50, 100, 300, 400, 500,   0},  // 50%
-  #  #      {500, 400, 400, 300, 200, 150, 150, 100, 100, 200, 300, 400, 500,   0},  // 40%
-  #  #      {500, 400, 400, 300, 300, 300, 300, 300, 300, 300, 300, 400, 500,   0},  // 30%
-  #  #      {500, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 500,   0},  // 20%
-  #  #      {500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,   0}   // 10%
-  #  #      //16   17   18   19   20   21   22   23   24   25   26   27   28
-  #  #    };
-  #  #     
-  #  #    // Vyhľadanie AQI hodnoty na základe vlhkosti
-  #  #    int humidity_index = 0;
-  #  #    if (humidity >= 90) humidity_index = 0;
-  #  #    else if (humidity >= 80) humidity_index = 1;
-  #  #    else if (humidity >= 70) humidity_index = 2;
-  #  #    else if (humidity >= 60) humidity_index = 3;
-  #  #    else if (humidity >= 50) humidity_index = 4;
-  #  #    else if (humidity >= 40) humidity_index = 5;
-  #  #    else if (humidity >= 30) humidity_index = 6;
-  #  #    else if (humidity >= 20) humidity_index = 7;
-  #  #    else humidity_index = 8;
-  #  #    
-  #  #    // Určenie AQI na základe teploty
-  #  #    int temp_index = 0;
-  #  #    if (temperature >= 28) temp_index = 13;
-  #  #    else if (temperature >= 27) temp_index = 12;
-  #  #    else if (temperature >= 26) temp_index = 11;
-  #  #    else if (temperature >= 25) temp_index = 10;
-  #  #    else if (temperature >= 24) temp_index = 9;
-  #  #    else if (temperature >= 23) temp_index = 8;
-  #  #    else if (temperature >= 22) temp_index = 7;
-  #  #    else if (temperature >= 21) temp_index = 6;
-  #  #    else if (temperature >= 20) temp_index = 5;
-  #  #    else if (temperature >= 19) temp_index = 4;
-  #  #    else if (temperature >= 18) temp_index = 3;
-  #  #    else if (temperature >= 17) temp_index = 2;
-  #  #    else if (temperature >= 16) temp_index = 1;
-  #  #    else temp_index = 0;
-  #  #    
-  #  #    // Lineárna interpolácia medzi teplotami
-  #  #    float ratio = (temperature - (15 + temp_index)) / (16 + temp_index - (15 + temp_index));
-  #  #    
-  #  #    // Výpočet interpolovanej hodnoty AQI
-  #  #    float interpolated_aqi = aqi_table[humidity_index][temp_index] + ratio * (aqi_table[humidity_index][temp_index + 1] - aqi_table[humidity_index][temp_index]);
-  #  #    
-  #  #    return interpolated_aqi;
-  #  lambda: |-
-  #    float temperature = id(aiq_temperature).state;
-  #    float humidity = id(aiq_humidity).state;
-  #    
-  #    const float aqi_table[9][14] = {
-  #      {500, 400, 300, 200, 200, 200, 200, 300, 400, 400, 500, 500, 500, 500}, //80
-  #      {400, 300, 100, 100, 100, 100, 100, 200, 300, 400, 400, 400, 500,   0}, //70
-  #      {400, 300, 200, 100,   0,   0,   0, 100, 200, 300, 400, 400, 500,   0}, //60
-  #      {400, 300, 200, 100,   0,   0,   0,  50, 100, 200, 300, 400, 500,   0}, //50
-  #      {400, 300, 200, 100,   0,   0,   0,   0,  50, 100, 300, 400, 500,   0}, //40
-  #      {500, 400, 400, 300, 200, 150, 150, 100, 100, 200, 300, 400, 500,   0}, //30
-  #      {500, 400, 400, 300, 300, 300, 300, 300, 300, 300, 300, 400, 500,   0}, //20
-  #      {500, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 500,   0}, //10
-  #      {500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,   0} 
-  #    // 16   17   18   19   20   21   22   23   24   25   26   27   28
-  #    };
-  #    
-  #    int humidity_index = 0;
-  #    if (humidity >= 90) humidity_index = 0;
-  #    else if (humidity >= 80) humidity_index = 1;
-  #    else if (humidity >= 70) humidity_index = 2;
-  #    else if (humidity >= 60) humidity_index = 3;
-  #    else if (humidity >= 50) humidity_index = 4;
-  #    else if (humidity >= 40) humidity_index = 5;
-  #    else if (humidity >= 30) humidity_index = 6;
-  #    else if (humidity >= 20) humidity_index = 7;
-  #    else humidity_index = 8;
-  #    
-  #    int temp_index = 0;
-  #    if (temperature >= 28) temp_index = 13;
-  #    else if (temperature >= 27) temp_index = 12;
-  #    else if (temperature >= 26) temp_index = 11;
-  #    else if (temperature >= 25) temp_index = 10;
-  #    else if (temperature >= 24) temp_index = 9;
-  #    else if (temperature >= 23) temp_index = 8;
-  #    else if (temperature >= 22) temp_index = 7;
-  #    else if (temperature >= 21) temp_index = 6;
-  #    else if (temperature >= 20) temp_index = 5;
-  #    else if (temperature >= 19) temp_index = 4;
-  #    else if (temperature >= 18) temp_index = 3;
-  #    else if (temperature >= 17) temp_index = 2;
-  #    else if (temperature >= 16) temp_index = 1;
-  #    else temp_index = 0;
-  #    
-  #    // Oprava: Zamedzenie prístupu mimo rozsah
-  #    if (temp_index >= 13) {
-  #      temp_index = 12;
-  #    }
-  #    
-  #    float ratio = temperature - (15 + temp_index);
-  #    
-  #    float interpolated_aqi = aqi_table[humidity_index][temp_index] +
-  #      ratio * (aqi_table[humidity_index][temp_index + 1] - aqi_table[humidity_index][temp_index]);
-  #    
-  #    return interpolated_aqi;
-  #      
-  ## Final Air Quality Index
-  #- platform:            template
-  #  name:                "${friendly_name} AQI"
-  #  update_interval:      never
-  #  unit_of_measurement:  AQI
-  #  id:                   aqi_final
-  #  accuracy_decimals:    0
-  #  lambda: |-
-  #    //float aqi_voc = id(aqi_voc).state;
-  #    //float aqi_climate = id(aqi_climate).state;
-  #    
-  #    // Vráť maximum z dvoch hodnôt
-  #    return fmax(id(aqi_voc).state, id(aqi_climate).state);
-  #  on_value:
-  #    then:
-  #      - if:
-  #          condition:
-  #            sensor.in_range:
-  #              id: aqi_final
-  #              above: 0.0
-  #          then:
-  #            - lvgl.indicator.update:
-  #                id:     lvgl_aqi_needle
-  #                opa:    100%
-  #            - lvgl.indicator.update:
-  #                id:    lvgl_aqi_needle
-  #                value: !lambda return x / 10;
-  #            - lvgl.arc.update:
-  #                id:    lvgl_aqi_arc
-  #                value: !lambda return x;
-  #                
-  #            - lvgl.label.update:
-  #                id:        lvgl_aiq_label
-  #                text:
-  #                  format: "%.0f AQI"
-  #                  args:    [ 'x' ]
-  #                  #args:    [ 'x / 10' ]
-  #          else:
-  #            - lvgl.indicator.update:
-  #                id:     lvgl_aqi_needle
-  #                opa:    0%
-  #                
-  #      # color indicator boot screen 
-  #      - if:
-  #          condition:
-  #            sensor.in_range:
-  #              id:    aqi_final
-  #              above:   0.0
-  #              below: 100.0
-  #          then:
-  #            - lvgl.label.update:
-  #                id:   lvgl_icon_emoticon
-  #                text: "😊"
-  #            - lvgl.arc.update:
-  #                id:        lvgl_aqi_arc
-  #                indicator: 
-  #                  arc_color: 0x85a642
-  #      - if:
-  #          condition:
-  #            sensor.in_range:
-  #              id:    aqi_final
-  #              above: 101.0
-  #              below: 150.0
-  #          then:
-  #            - lvgl.label.update:
-  #                id:   lvgl_icon_emoticon
-  #                text: "🙂"
-  #            - lvgl.arc.update:
-  #                id:        lvgl_aqi_arc
-  #                indicator: 
-  #                  arc_color: 0xa3d936
-  #      - if:
-  #          condition:
-  #            sensor.in_range:
-  #              id:    aqi_final
-  #              above: 151.0
-  #              below: 200.0
-  #          then:
-  #            - lvgl.label.update:
-  #                id:   lvgl_icon_emoticon
-  #                text: "😐"
-  #            - lvgl.arc.update:
-  #                id:        lvgl_aqi_arc
-  #                indicator: 
-  #                  arc_color: 0xf8da56
-  #      - if:
-  #          condition:
-  #            sensor.in_range:
-  #              id:    aqi_final
-  #              above: 201.0
-  #              below: 300.0
-  #          then:
-  #            - lvgl.label.update:
-  #                id:   lvgl_icon_emoticon
-  #                text: "🙁"
-  #            - lvgl.arc.update:
-  #                id:        lvgl_aqi_arc
-  #                indicator: 
-  #                  arc_color: 0xff9c5b
-  #      - if:
-  #          condition:
-  #            sensor.in_range:
-  #              id:    aqi_final
-  #              above: 301.0
-  #              below: 400.0
-  #          then:
-  #            - lvgl.label.update:
-  #                id:   lvgl_icon_emoticon
-  #                text: "😮"
-  #            - lvgl.arc.update:
-  #                id:        lvgl_aqi_arc
-  #                indicator: 
-  #                  arc_color: 0xff696c
-  #      - if:
-  #          condition:
-  #            sensor.in_range:
-  #              id:    aqi_final
-  #              above: 401.0
-  #          then:
-  #            - lvgl.label.update:
-  #                id:   lvgl_icon_emoticon
-  #                text: "😵"
-  #            - lvgl.arc.update:
-  #                id:        lvgl_aqi_arc
-  #                indicator: 
-  #                  arc_color: 0x05775
-  #          
- #-------------------------------------------
- # Mermory size free
- #-------------------------------------------     
-  #- platform: template
-  #  name: ${friendly_name} Free Mem Size
-  #  entity_category: diagnostic
-  #  unit_of_measurement: kb
-  #  accuracy_decimals: 0
-  #  lambda: |-
-  #    size_t freeValue = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
-  #    return freeValue / 1024.0;
-  #  update_interval: 30s
-
-  #- platform: template
-  #  name: "PSRAM Free"
-  #  unit_of_measurement: "kb"
-  #  accuracy_decimals: 0
-  #  update_interval: 10s
-  #  entity_category: diagnostic
-  #  lambda: |-
-  #    return heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024.0;
-
-  #- platform: template
-  #  name: "Internal RAM Free"
-  #  unit_of_measurement: "kb"
-  #  accuracy_decimals: 0
-  #  update_interval: 10s
-  #  entity_category: diagnostic
-  #  lambda: |-
-  #    return heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024.0;
+  - platform:        sm300d2
+    id:              sm300d2_aiq
+    update_interval: 5s
+    #temperature:
+    #  name:         "${friendly_name} Temperature"
+    #  
+    #  filters:
+    #    - offset: -6.5
+    #    - lambda: |-
+    #        static float startup_time = millis() / 1000.0;
+    #        static bool is_initializing = id(is_poweron_start);
+    #      
+    #        if (is_initializing) {
+    #          float time_since_start = (millis() / 1000.0) - startup_time;
+    #          if (time_since_start >= 600) {
+    #            is_initializing = false;  // Po 10 minútach ukonči pridávanie offsetu
+    #            id(is_poweron_start) = false;
+    #            return x;  // Pôvodná hodnota
+    #          }
+    #          float adjustment = 3.5 * (1.0 - (time_since_start / 600.0)); // Lineárny pokles offsetu
+    #          return x + adjustment;
+    #        }
+    #      
+    #        return x;  // Po inicializácii vráť pôvodnú hodnotu
+    #    - quantile:
+    #        window_size: 4
+    #        send_every: 4
+    #        send_first_at: 3
+    #        quantile: .5
+    #    - lambda: 'return max((float)-10.0, x);' # No value lower than 0
+    #    - filter_out: -10.0
+  
+    #humidity:
+    #  name: "${friendly_name} Humidity"
+    #  
+    #  filters:
+    #    - offset: 15.0
+    #    - quantile:
+    #        window_size: 4
+    #        send_every: 4
+    #        send_first_at: 3
+    #        quantile: .5
+    #    - lambda: 'return min((float)100.0, x);' # No value lower than 0
+    #    - filter_out: 100.0
+    #  accuracy_decimals: 1
+  
+    co2:
+      name: "${friendly_name} CO2"
+      id:    aiq_co2
+      filters:
+        - quantile:
+            window_size: 4
+            send_every: 4
+            send_first_at: 1
+            quantile: .5
+        - lambda: 'return min((float)5001.0, x);' # No value lower than 0
+        - filter_out: 5001.0
+      on_value:
+        # value
+        - lvgl.label.update:
+            id: lvgl_aiq_co2
+            text:
+              format: "%.0f"
+              args: [ 'x' ]
+        # object show   
+        - lvgl.obj.update:
+            id: lvgl_obj_eco2
+            hidden: false
+  
+        - component.update: aqi_climate
+        - component.update: aqi_voc
+        - delay: 50ms
+        - component.update: aqi_final
+    tvoc:
+      name: "${friendly_name} TVOC"
+      id: aiq_tvoc
+      filters:
+        - quantile:
+            window_size: 4
+            send_every: 4
+            send_first_at: 3
+            quantile: .5
+        - lambda: 'return min((float)2001.0, x);' # No value lower than 0
+        - filter_out: 2001.0
+      on_value:
+        # value
+        - lvgl.label.update:
+            id: lvgl_aiq_tvoc
+            text:
+              format: "%.0f"
+              args: [ 'x' ]
+        # object show   
+        - lvgl.obj.update:
+            id: lvgl_obj_tvoc
+            hidden: false
+    pm_2_5:
+      name: "${friendly_name} PM2.5"
+      id:    aiq_pm2_5
+      filters:
+        - quantile:
+            window_size: 4
+            send_every: 4
+            send_first_at: 1
+            quantile: .8
+        - lambda: 'return min((float)101.0, x);' # No value lower than 0
+        - filter_out: 101.0
+    pm_10_0:
+      name: "${friendly_name} PM10"
+      id:    aiq_pm10
+      filters:
+        - quantile:
+            window_size: 4
+            send_every: 4
+            send_first_at: 1
+            quantile: .8
+        - lambda: 'return min((float)101.0, x);' # No value lower than 0
+        - filter_out: 101.0
+    formaldehyde:
+      name: "${friendly_name} Formaldehyde"
+      id: aiq_ch2o
+      filters:
+        - quantile:
+            window_size: 4
+            send_every: 4
+            send_first_at: 1
+            quantile: .6
+        - lambda: 'return min((float)1001.0, x);' # No value lower than 0
+        - filter_out: 1001.0
+      on_value:
+        # value
+        - lvgl.label.update:
+            id: lvgl_aiq_ch2o
+            text:
+              format: "%.0f"
+              args: [ 'x' ]
+        # object show   
+        - lvgl.obj.update:
+            id: lvgl_obj_ch2o
+            hidden: false
+  
+  #-------------------------------------------
+  # Air Quality Index
+  #------------------------------------------- 
+  # gases and particulare
+  - platform:            template
+    name: "${friendly_name} AQI VOC"
+    id: aqi_voc
+    #internal: true
+    accuracy_decimals: 0
+    update_interval: never
+    lambda: |-
+      float pm25 = id(aiq_pm2_5).state;
+      float pm10 = id(aiq_pm10).state;
+      float co2 = id(aiq_co2).state;
+      float tvoc = id(aiq_tvoc).state;
+      float ch2o = id(aiq_ch2o).state;
+      
+      // Function to calculate AQI for each pollutant
+      auto calculate_aqi = [](float conc, float BP_Lo, float BP_Hi, int I_Lo, int I_Hi) {
+        return ((I_Hi - I_Lo) / (BP_Hi - BP_Lo)) * (conc - BP_Lo) + I_Lo;
+      };
+      // PM2.5 AQI
+      float aqi_pm25 = (pm25 <= 20)   ? calculate_aqi(pm25,    0,   20,   0, 100) :
+                       (pm25 <= 50)   ? calculate_aqi(pm25,   20,   50, 101, 200) :
+                       (pm25 <= 90)   ? calculate_aqi(pm25,   50,   90, 201, 300) :
+                       (pm25 <= 140)  ? calculate_aqi(pm25,   90,  140, 301, 400) :
+                                        calculate_aqi(pm25,  140,  200, 401, 500);
+      // PM10 AQI                     
+      float aqi_pm10 = (pm10 <= 30)   ? calculate_aqi(pm10,    0,   30,   0, 100) :
+                       (pm10 <= 75)   ? calculate_aqi(pm10,   30,   75, 101, 200) :
+                       (pm10 <= 125)  ? calculate_aqi(pm10,   75,  125, 201, 300) :
+                       (pm10 <= 200)  ? calculate_aqi(pm10,  125,  200, 301, 400) :
+                                        calculate_aqi(pm10,  200,  300, 401, 500);
+      // CO2 AQI
+      float aqi_co2 = (co2 <= 599)    ? calculate_aqi(co2,   400,  599,   0, 100) :
+                      (co2 <= 999)    ? calculate_aqi(co2,   600,  999, 101, 200) :
+                      (co2 <= 1499)   ? calculate_aqi(co2,  1000, 1499, 201, 300) :
+                      (co2 <= 2499)   ? calculate_aqi(co2,  1500, 2499, 301, 400) :
+                                        calculate_aqi(co2,  2500, 5000, 401, 500);
+      // TVOC AQI
+      float aqi_tvoc = (tvoc <= 199)  ? calculate_aqi(tvoc,    1,  199,   0, 100) :
+                       (tvoc <= 660)  ? calculate_aqi(tvoc,  200,  660, 101, 200) :
+                       (tvoc <= 1100) ? calculate_aqi(tvoc,  661, 1100, 201, 300) :
+                       (tvoc <= 1651) ? calculate_aqi(tvoc, 1101, 1651, 301, 400) :
+                                        calculate_aqi(tvoc, 1651, 2000, 401, 500);
+      // CH2O AQI (Formaldehyde)
+      float aqi_ch2o = (ch2o <= 50)   ? calculate_aqi(ch2o,    0,   50,   0, 100) :
+                       (ch2o <= 150)  ? calculate_aqi(ch2o,   51,  150, 101, 200) :
+                       (ch2o <= 300)  ? calculate_aqi(ch2o,  151,  300, 201, 300) :
+                       (ch2o <= 500)  ? calculate_aqi(ch2o,  301,  500, 301, 400) :
+                                        calculate_aqi(ch2o,  501, 1000, 401, 500);
+      
+      // The final AIQ is the highest value from all pollutants
+      return fmax(fmax(fmax(fmax(aqi_pm25, aqi_pm10), fmax(aqi_co2, aqi_tvoc)), aqi_ch2o), 0);
+      
+  # Temperature and Humidity
+  - platform:            template
+    name: "${friendly_name} AQI Climate"
+    id: aqi_climate
+    #internal: true
+    accuracy_decimals: 0
+    update_interval: never 
+    #lambda: |-
+    #    float temperature = id(aiq_temperature).state;
+    #    float humidity = id(aiq_humidity).state;
+    #    
+    #    // Tabuľka AQI podľa teploty a vlhkosti
+    #    const float aqi_table[9][14] = {
+    #      {500, 400, 300, 200, 200, 200, 200, 300, 400, 400, 500, 500, 500, 500},  // 90%
+    #      {400, 300, 100, 100, 100, 100, 100, 200, 300, 400, 400, 400, 500,   0},  // 80%
+    #      {400, 300, 200, 100,   0,   0,   0, 100, 200, 300, 400, 400, 500,   0},  // 70%
+    #      {400, 300, 200, 100,   0,   0,   0,  50, 100, 200, 300, 400, 500,   0},  // 60%
+    #      {400, 300, 200, 100,   0,   0,   0,   0,  50, 100, 300, 400, 500,   0},  // 50%
+    #      {500, 400, 400, 300, 200, 150, 150, 100, 100, 200, 300, 400, 500,   0},  // 40%
+    #      {500, 400, 400, 300, 300, 300, 300, 300, 300, 300, 300, 400, 500,   0},  // 30%
+    #      {500, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 500,   0},  // 20%
+    #      {500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,   0}   // 10%
+    #      //16   17   18   19   20   21   22   23   24   25   26   27   28
+    #    };
+    #     
+    #    // Vyhľadanie AQI hodnoty na základe vlhkosti
+    #    int humidity_index = 0;
+    #    if (humidity >= 90) humidity_index = 0;
+    #    else if (humidity >= 80) humidity_index = 1;
+    #    else if (humidity >= 70) humidity_index = 2;
+    #    else if (humidity >= 60) humidity_index = 3;
+    #    else if (humidity >= 50) humidity_index = 4;
+    #    else if (humidity >= 40) humidity_index = 5;
+    #    else if (humidity >= 30) humidity_index = 6;
+    #    else if (humidity >= 20) humidity_index = 7;
+    #    else humidity_index = 8;
+    #    
+    #    // Určenie AQI na základe teploty
+    #    int temp_index = 0;
+    #    if (temperature >= 28) temp_index = 13;
+    #    else if (temperature >= 27) temp_index = 12;
+    #    else if (temperature >= 26) temp_index = 11;
+    #    else if (temperature >= 25) temp_index = 10;
+    #    else if (temperature >= 24) temp_index = 9;
+    #    else if (temperature >= 23) temp_index = 8;
+    #    else if (temperature >= 22) temp_index = 7;
+    #    else if (temperature >= 21) temp_index = 6;
+    #    else if (temperature >= 20) temp_index = 5;
+    #    else if (temperature >= 19) temp_index = 4;
+    #    else if (temperature >= 18) temp_index = 3;
+    #    else if (temperature >= 17) temp_index = 2;
+    #    else if (temperature >= 16) temp_index = 1;
+    #    else temp_index = 0;
+    #    
+    #    // Lineárna interpolácia medzi teplotami
+    #    float ratio = (temperature - (15 + temp_index)) / (16 + temp_index - (15 + temp_index));
+    #    
+    #    // Výpočet interpolovanej hodnoty AQI
+    #    float interpolated_aqi = aqi_table[humidity_index][temp_index] + ratio * (aqi_table[humidity_index][temp_index + 1] - aqi_table[humidity_index][temp_index]);
+    #    
+    #    return interpolated_aqi;
+    lambda: |-
+      float temperature = id(aiq_temperature).state;
+      float humidity = id(aiq_humidity).state;
+      
+      const float aqi_table[9][14] = {
+        {500, 400, 300, 200, 200, 200, 200, 300, 400, 400, 500, 500, 500, 500}, //80
+        {400, 300, 100, 100, 100, 100, 100, 200, 300, 400, 400, 400, 500,   0}, //70
+        {400, 300, 200, 100,   0,   0,   0, 100, 200, 300, 400, 400, 500,   0}, //60
+        {400, 300, 200, 100,   0,   0,   0,  50, 100, 200, 300, 400, 500,   0}, //50
+        {400, 300, 200, 100,   0,   0,   0,   0,  50, 100, 300, 400, 500,   0}, //40
+        {500, 400, 400, 300, 200, 150, 150, 100, 100, 200, 300, 400, 500,   0}, //30
+        {500, 400, 400, 300, 300, 300, 300, 300, 300, 300, 300, 400, 500,   0}, //20
+        {500, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 500,   0}, //10
+        {500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,   0} 
+      // 16   17   18   19   20   21   22   23   24   25   26   27   28
+      };
+      
+      int humidity_index = 0;
+      if (humidity >= 90) humidity_index = 0;
+      else if (humidity >= 80) humidity_index = 1;
+      else if (humidity >= 70) humidity_index = 2;
+      else if (humidity >= 60) humidity_index = 3;
+      else if (humidity >= 50) humidity_index = 4;
+      else if (humidity >= 40) humidity_index = 5;
+      else if (humidity >= 30) humidity_index = 6;
+      else if (humidity >= 20) humidity_index = 7;
+      else humidity_index = 8;
+      
+      int temp_index = 0;
+      if (temperature >= 28) temp_index = 13;
+      else if (temperature >= 27) temp_index = 12;
+      else if (temperature >= 26) temp_index = 11;
+      else if (temperature >= 25) temp_index = 10;
+      else if (temperature >= 24) temp_index = 9;
+      else if (temperature >= 23) temp_index = 8;
+      else if (temperature >= 22) temp_index = 7;
+      else if (temperature >= 21) temp_index = 6;
+      else if (temperature >= 20) temp_index = 5;
+      else if (temperature >= 19) temp_index = 4;
+      else if (temperature >= 18) temp_index = 3;
+      else if (temperature >= 17) temp_index = 2;
+      else if (temperature >= 16) temp_index = 1;
+      else temp_index = 0;
+      
+      // Oprava: Zamedzenie prístupu mimo rozsah
+      if (temp_index >= 13) {
+        temp_index = 12;
+      }
+      
+      float ratio = temperature - (15 + temp_index);
+      
+      float interpolated_aqi = aqi_table[humidity_index][temp_index] +
+        ratio * (aqi_table[humidity_index][temp_index + 1] - aqi_table[humidity_index][temp_index]);
+      
+      return interpolated_aqi;
+        
+  # Final Air Quality Index
+  - platform:            template
+    name:                "${friendly_name} AQI"
+    update_interval:      never
+    unit_of_measurement:  AQI
+    id:                   aqi_final
+    accuracy_decimals:    0
+    lambda: |-
+      //float aqi_voc = id(aqi_voc).state;
+      //float aqi_climate = id(aqi_climate).state;
+      
+      // Vráť maximum z dvoch hodnôt
+      return fmax(id(aqi_voc).state, id(aqi_climate).state);
+    on_value:
+      then:
+        - if:
+            condition:
+              sensor.in_range:
+                id: aqi_final
+                above: 0.0
+            then:
+              - lvgl.indicator.update:
+                  id:     lvgl_aqi_needle
+                  opa:    100%
+              - lvgl.indicator.update:
+                  id:    lvgl_aqi_needle
+                  value: !lambda return x / 10;
+              - lvgl.arc.update:
+                  id:    lvgl_aqi_arc
+                  value: !lambda return x;
+                  
+              - lvgl.label.update:
+                  id:        lvgl_aiq_label
+                  text:
+                    format: "%.0f AQI"
+                    args:    [ 'x' ]
+                    #args:    [ 'x / 10' ]
+            else:
+              - lvgl.indicator.update:
+                  id:     lvgl_aqi_needle
+                  opa:    0%
+                  
+        # color indicator boot screen 
+        - if:
+            condition:
+              sensor.in_range:
+                id:    aqi_final
+                above:   0.0
+                below: 100.0
+            then:
+              - lvgl.label.update:
+                  id:   lvgl_icon_emoticon
+                  text: "😊"
+              - lvgl.arc.update:
+                  id:        lvgl_aqi_arc
+                  indicator: 
+                    arc_color: 0x85a642
+        - if:
+            condition:
+              sensor.in_range:
+                id:    aqi_final
+                above: 101.0
+                below: 150.0
+            then:
+              - lvgl.label.update:
+                  id:   lvgl_icon_emoticon
+                  text: "🙂"
+              - lvgl.arc.update:
+                  id:        lvgl_aqi_arc
+                  indicator: 
+                    arc_color: 0xa3d936
+        - if:
+            condition:
+              sensor.in_range:
+                id:    aqi_final
+                above: 151.0
+                below: 200.0
+            then:
+              - lvgl.label.update:
+                  id:   lvgl_icon_emoticon
+                  text: "😐"
+              - lvgl.arc.update:
+                  id:        lvgl_aqi_arc
+                  indicator: 
+                    arc_color: 0xf8da56
+        - if:
+            condition:
+              sensor.in_range:
+                id:    aqi_final
+                above: 201.0
+                below: 300.0
+            then:
+              - lvgl.label.update:
+                  id:   lvgl_icon_emoticon
+                  text: "🙁"
+              - lvgl.arc.update:
+                  id:        lvgl_aqi_arc
+                  indicator: 
+                    arc_color: 0xff9c5b
+        - if:
+            condition:
+              sensor.in_range:
+                id:    aqi_final
+                above: 301.0
+                below: 400.0
+            then:
+              - lvgl.label.update:
+                  id:   lvgl_icon_emoticon
+                  text: "😮"
+              - lvgl.arc.update:
+                  id:        lvgl_aqi_arc
+                  indicator: 
+                    arc_color: 0xff696c
+        - if:
+            condition:
+              sensor.in_range:
+                id:    aqi_final
+                above: 401.0
+            then:
+              - lvgl.label.update:
+                  id:   lvgl_icon_emoticon
+                  text: "😵"
+              - lvgl.arc.update:
+                  id:        lvgl_aqi_arc
+                  indicator: 
+                    arc_color: 0x05775
 
  #-------------------------------------------
  # Dimmer lights
@@ -4315,10 +4292,7 @@ time:
         then:
           - switch.turn_off: switch_antiburn
           
-#  - platform: homeassistant
-#    id: esptime
-#    #timezone: "Europe/Bratislava"
-#
+
 #    # Synchronize time
 #    on_time_sync:
 #      then:
@@ -4396,7 +4370,9 @@ button:
   - platform: template
     name: test bootscreen
     on_press:
-      - lvgl.widget.hide: boot_screen
+      - lvgl.label.update: 
+          id: label_news
+          long_mode: scroll_circular
 
 #-------------------------------------------
 # NUMBERS
