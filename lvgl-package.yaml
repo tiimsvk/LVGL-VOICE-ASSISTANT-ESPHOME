@@ -451,6 +451,8 @@ lvgl:
                       #bg_color:      0x000000 # black
                       bg_opa:       0
                       scrollbar_mode: "OFF"
+                      #outline_width:   1        # dev settings
+                      #outline_color:   0xFFFFFF # dev settings
                       #layout: 
                       #  type:       GRID
                       #  grid_columns: [FR(80), FR(400)]
@@ -461,6 +463,7 @@ lvgl:
                         grid_columns: [FR(470)]
                         grid_rows:    [FR(20), FR(250)]
                         pad_row:      0
+                        multiple_widgets_per_cell: true
                       on_press:
                         - lvgl.widget.hide: boot_screen
                       widgets:
@@ -487,9 +490,10 @@ lvgl:
                             pad_left:  10
                             styles:    style_name_date
                             text_font: fontcelsius_small
-                            #long_mode: scroll_circular
-                            height:    size_content
-                            width:     455px
+                            long_mode: clip
+                            #height:    size_content
+                            height: 20px
+                            width:     450px
                             text:     ' '
                             id:        label_news
   
@@ -509,10 +513,10 @@ lvgl:
                             bg_opa:               0
                             layout:               
                               type:               GRID
-                              grid_columns:       [FR(230), FR(230)]
+                              grid_columns:       [FR(230), FR(240)]
                               grid_rows:          [FR(170), FR(30), FR(30)]
                               pad_row:            0
-                            
+                              multiple_widgets_per_cell: true
                             on_press:
                               - lvgl.widget.hide: boot_screen
                             widgets:
@@ -576,6 +580,8 @@ lvgl:
                               - obj:
                                   grid_cell_row_pos:    0
                                   grid_cell_column_pos: 1
+                                  #outline_width:   1        # dev settings
+                                  #outline_color:   0xFFFFFF # dev settings
                                   #grid_cell_column_span: 1
                                   grid_cell_x_align:    END
                                   grid_cell_y_align:    START
@@ -587,16 +593,19 @@ lvgl:
                                   bg_opa:               0
                                   layout:               
                                     type:               FLEX
-                                    flex_flow:          COLUMN_WRAP
+                                    #flex_flow:          COLUMN_WRAP
+                                    flex_align_main:    END
                                   widgets:
                                     - label:
-                                        id:         label_time_hours
-                                        styles:     style_time
-                                        text:      "00"
-                                        pad_all:    0
-                                        height:     160
+                                        id:             label_time_hours
+                                        align:          TOP_RIGHT
+                                        styles:         style_time
+                                        text:          "00"
+                                        pad_all:        0
+                                        height:         160
                                     - label:
                                         id:         label_time_colon
+                                        align:          TOP_RIGHT
                                         styles:     style_time
                                         text:      ":"
                                         text_color: 0xd1864d
@@ -604,6 +613,7 @@ lvgl:
                                         height:     160
                                     - label:
                                         id:         label_time_minutes
+                                        align:          TOP_RIGHT
                                         styles:     style_time
                                         text:      "00"
                                         pad_all:    0
@@ -980,9 +990,9 @@ lvgl:
     #------------------------------------------- 
         # status online indicator
       - label:
-            text:      "${online_status}"
-            id:         lvgl_online_status
-            hidden:     true
+            text:      " "
+            id:         label_signal_icon
+            #hidden:     true
             align:      top_right
             #x:         -20
             x:         -2
@@ -1007,589 +1017,6 @@ lvgl:
 #------------------------------------------- 
   page_wrap: true
   pages:
-#------------------------------------------
-# #PAGE BOOT
-#-------------------------------------------    
-#    - id:             boot_screen
-#      x:              0
-#      y:              0
-#      width:          100%
-#      height:         100%
-#      bg_color:       0x000000 # black
-#      bg_opa:         cover
-#      radius:         0
-#      pad_all:        0
-#      border_width:   0
-#      layout: 
-#        type:         FLEX
-#        flex_flow:    COLUMN_WRAP
-#        pad_row:      0
-#      on_press:
-#        - lvgl.widget.hide: boot_screen
-#      widgets:
-
-#            # --------------------------------------------------
-#            # FULL PAGE BOOT OBJECT
-#            # --------------------------------------------------
-#            - obj:
-#                styles:          style_object
-#                border_width:    0
-#                pad_left:        0
-#                height:          100%
-#                width:           100%
-#                bg_opa:          0
-#                scrollbar_mode: "OFF"
-#                #layout: 
-#                #  type:       GRID
-#                #  grid_columns: [FR(241), FR(239)]
-#                #  #grid_rows: [CONTENT, FR(20), FR(20), FR(100)]
-#                #  grid_rows:    [FR(170), FR(35), FR(30)]
-#                #  pad_row:      0
-#                on_press:
-#                  - lvgl.widget.hide: boot_screen
-#                  #- lvgl.label.update:
-#                  #    id: uvindex_lvgl
-#                  #    transform_angle: 0
-#                # Time
-#                widgets:
-#                # --------------------------------------------------          
-#                # CALENDAR AND NEWS AND TIME
-#                # --------------------------------------------------
-#                  - obj:
-#                      #id:           lvgl_boot_info
-#                      #hidden:       false
-#                      styles:       style_object
-#                      border_width: 0
-#                      pad_all:      0
-#                      height:       270
-#                      width:        100%
-#                      #bg_color:      0x000000 # black
-#                      bg_opa:       0
-#                      scrollbar_mode: "OFF"
-#                      #layout: 
-#                      #  type:       GRID
-#                      #  grid_columns: [FR(80), FR(400)]
-#                      #  grid_rows:    [FR(20), FR(20), FR(20)]
-#                      #  pad_row:      0
-#                      layout: 
-#                        type:         GRID
-#                        grid_columns: [FR(470)]
-#                        grid_rows:    [FR(20), FR(250)]
-#                        pad_row:      0
-#                      on_press:
-#                        - lvgl.widget.hide: boot_screen
-#                      widgets:
-#                      # --------------------------------------------------
-#                      # NEWS
-#                      # --------------------------------------------------
-#                        #- label:
-#                        #    grid_cell_row_pos:     0
-#                        #    grid_cell_column_pos:  0
-#                        #    text:      "Správy"
-#                        #    styles:     style_temp
-#                        #    text_font:  fontcelsius_small
-#                        #    #align:      BOTTOM_RIGHT
-#                        #    #text_align: right
-#                        #    #pad_top:    15
-#                        #    pad_left:   10
-#                  
-#                        - label:
-#                            grid_cell_row_pos:     0
-#                            grid_cell_column_pos:  0
-#                            #align:      BOTTOM_RIGHT
-#                            #text_align: right
-#                            pad_top:   7
-#                            pad_left:  10
-#                            styles:    style_name_date
-#                            text_font: fontcelsius_small
-#                            long_mode: scroll_circular
-#                            height:    size_content
-#                            width:     455px
-#                            text:     ' '
-#                            id:        label_news
-#  
-#                      # --------------------------------------------------
-#                      # TIME AND CALENDAR
-#                      # --------------------------------------------------
-#                        - obj:
-#                            grid_cell_row_pos:    1
-#                            grid_cell_column_pos: 0
-#                            grid_cell_x_align:    START
-#                            grid_cell_y_align:    START
-#                            styles:               style_object
-#                            border_width:         0
-#                            pad_left:             10
-#                            height:               250
-#                            width:                470
-#                            bg_opa:               0
-#                            layout:               
-#                              type:               GRID
-#                              grid_columns:       [FR(230), FR(230)]
-#                              grid_rows:          [FR(170), FR(30), FR(30)]
-#                              pad_row:            0
-#                            
-#                            on_press:
-#                              - lvgl.widget.hide: boot_screen
-#                            widgets:
-#                            # CALENDAR
-#                              - obj:
-#                                  grid_cell_row_pos:    0
-#                                  grid_cell_column_pos: 0
-#                                  grid_cell_x_align:    START
-#                                  grid_cell_y_align:    START
-#                                  styles:               style_object
-#                                  border_width:         0
-#                                  pad_all:              0
-#                                  pad_top:              30
-#                                  height:               170
-#                                  width:                242
-#                                  bg_opa:               0
-#                                  layout:               
-#                                    type:               FLEX
-#                                    flex_flow:          COLUMN_WRAP
-#                                  widgets:
-#                                    ## Calendar
-#                                    #- label:
-#                                    #    grid_cell_row_pos:     0
-#                                    #    grid_cell_column_pos:  0
-#                                    #    text:      "Kalendár"
-#                                    #    styles:     style_temp
-#                                    #    text_font:  fontcelsius_small
-#                                    #    #align:      BOTTOM_RIGHT
-#                                    #    #text_align: right
-#                                    #    #pad_top:    15
-#                                    #    pad_left:   10
-#                                    #Waste
-#                                    - label:
-#                                        #grid_cell_row_pos:     0
-#                                        #grid_cell_column_pos:  1
-#                                        text:      " "
-#                                        styles:     style_temp
-#                                        text_font:  fontcelsius_small
-#                                        #pad_left:   10
-#                                        id:         calendar_waste
-#                                        long_mode:  scroll_circular
-#                                        width:      230
-#                                        #outline_width:   1        # dev settings
-#                                        #outline_color:   0xFFFFFF # dev settings
-#                                    #Calendar
-#                                    - label:
-#                                        #grid_cell_row_pos:     1
-#                                        #grid_cell_column_pos:  1
-#                                        text:      " "
-#                                        styles:     style_temp
-#                                        text_font:  fontcelsius_small
-#                                        #align:      BOTTOM_RIGHT
-#                                        #text_align: right
-#                                        #pad_top:    15
-#                                        #pad_left:   10
-#                                        id:         calendar_event_1
-#                                        long_mode:  wrap
-#                                        width:      230
-#                                        
-#                            # TIME
-#                              - obj:
-#                                  grid_cell_row_pos:    0
-#                                  grid_cell_column_pos: 1
-#                                  #grid_cell_column_span: 1
-#                                  grid_cell_x_align:    END
-#                                  grid_cell_y_align:    START
-#                                  styles:               style_object
-#                                  border_width:         0
-#                                  pad_all:              0
-#                                  height:               170
-#                                  width:                242
-#                                  bg_opa:               0
-#                                  layout:               
-#                                    type:               FLEX
-#                                    flex_flow:          COLUMN_WRAP
-#                                  widgets:
-#                                    - label:
-#                                        id:         label_time_hours
-#                                        styles:     style_time
-#                                        text:      "00"
-#                                        pad_all:    0
-#                                        height:     160
-#                                    - label:
-#                                        id:         label_time_colon
-#                                        styles:     style_time
-#                                        text:      ":"
-#                                        text_color: 0xd1864d
-#                                        pad_all:    0
-#                                        height:     160
-#                                    - label:
-#                                        id:         label_time_minutes
-#                                        styles:     style_time
-#                                        text:      "00"
-#                                        pad_all:    0
-#                                        height:     160
-#                                        on_press:
-#                                          - lvgl.widget.hide: boot_screen
-#                            # Date 
-#                              - label:
-#                                  grid_cell_row_pos:    1
-#                                  grid_cell_column_pos: 1
-#                                  grid_cell_x_align:    END
-#                                  grid_cell_y_align:    START
-#                                  id:       label_date
-#                                  styles:   style_name_date
-#                                  height:   30
-#                                  #text:   " "
-#                                  text:     " "
-#                        
-#                            # Namedays
-#                              - label:
-#                                  grid_cell_row_pos:    2
-#                                  grid_cell_column_pos: 1
-#                                  grid_cell_x_align:    END
-#                                  grid_cell_y_align:    START
-#                                  id:         label_namedays
-#                                  styles:     style_name_date
-#                                  text_font:  bahnshrift24
-#                                  text:       " "
-#                                  height:     30
-#                                  
-#                # --------------------------------------------------          
-#                # ROUNDED INFO GRAPHIC
-#                # --------------------------------------------------
-#                  # Background
-#                  - arc:
-#                      x:          -380
-#                      y:           120                           
-#                      value:       0
-#                      arc_width:   100
-#                      start_angle: 270
-#                      end_angle:   360
-#                      width:       720
-#                      height:      720
-#                      #arc_color:
-#                      arc_opa:     20%
-#                      arc_rounded: false
-#                      scrollbar_mode: "OFF"
-#                      
-#                  # AQI indicator  (width 12)        
-#                  - arc:
-#                      id:          lvgl_aqi_arc
-#                      x:          -380
-#                      y:           120                           
-#                      value:       0
-#                      #arc_width:   100
-#                      start_angle: 270
-#                      end_angle:   360
-#                      width:       720
-#                      height:      720
-#                      max_value:   500
-#                      min_value:   0
-#                      scrollbar_mode: "OFF"
-#                      #arc_color:
-#                      
-#                      arc_opa:     0%
-#                      arc_rounded: false
-#                      indicator:
-#                        arc_color: 0xcccaca
-#                        # bg_color: 0x1d5f96
-#                        # bg_grad_color: 0x03324A
-#                        # bg_grad_dir: VER
-#                        # bg_opa:      COVER
-#                      
-#                  # Delimeter    
-#                  - meter:
-#                      x:                    -385
-#                      y:                     115 
-#                      height:                730
-#                      width:                 730
-#                      border_width:          0
-#                      align:                 top_left
-#                      bg_opa:                TRANSP
-#                      scrollbar_mode:       "OFF"
-#                      scales:
-#                        - range_from:        0
-#                          range_to:          6
-#                          angle_range:       90
-#                          rotation:          270
-#                          ticks:
-#                            count:           6
-#                            width:           1
-#                            length:          78
-#                          indicators:
-#                            - tick_style:
-#                                start_value: 0          # color start change
-#                                end_value:   6         # color end   change
-#                                color_start: 0x7e7e7e
-#                                color_end:   0x7e7e7e
-#                                width:       1
-#                                
-#                # --------------------------------------------------
-#                # MAIN WEATHER INFO
-#                # --------------------------------------------------
-#                
-#                # Forecast image
-#                  - image:
-#                      x:          10
-#                      y:          260
-#                      id:         label_forecast_img
-#                      src:        img_partlycloudy
-#                      hidden:     true
-#                      zoom:       1.1
-#                      #outline_width:   1        # dev settings
-#                      #outline_color:   0xFFFFFF # dev settings
-#                      
-#                # Temperature out
-#                  - label:
-#                      x:          -310
-#                      y:          0
-#                      text:      " " # xx°C
-#                      styles:     style_temp
-#                      align:      BOTTOM_RIGHT
-#                      text_align: right
-#                      pad_top:    5
-#                      pad_right:  35
-#                      id:         lvgl_temp_out_boot
-#  
-#                  - label:
-#                      x:         -345
-#                      y:         -7
-#                      text:      " "
-#                      styles:     style_temp
-#                      text_font:  fontcelsius
-#                      align:      BOTTOM_RIGHT
-#                      text_align: left
-#                      pad_top:    5
-#                      pad_right:  35
-#                      id:         lvgl_temp_out_boot_dec
-#                      
-#                # --------------------------------------------------
-#                # ADDITIONAL WEATHER AND AQI INFO
-#                # --------------------------------------------------
-#                # Temp feels
-#                  - obj:
-#                      x:               1
-#                      y:               140
-#                      #x:               -10
-#                      #y:               215
-#                      #transform_angle: 282
-#                      styles:          style_object
-#                      border_width:    0
-#                      pad_left:        0
-#                      height:          75
-#                      width:           80
-#                      bg_opa:          0
-#                      #outline_width:   1        # dev settings
-#                      #outline_color:   0xFFFFFF # dev settings
-#                      widgets:
-#                        - label:
-#                            id:         lvgl_temp_feels_boot
-#                            #text:      "36 °"
-#                            text:      " "
-#                            styles:     style_temp
-#                            text_font:  fonttemp_mid2
-#                            align:      TOP_RIGHT
-#                            text_align: right
-#                        - label:
-#                            id:         lvgl_temp_feels_dec_boot
-#                            #text:      ".0"
-#                            text:      " "
-#                            styles:     style_temp
-#                            text_font:  fontcelsius
-#                            align:      TOP_RIGHT
-#                            text_align: left
-#                            y:          19
-#                            x:         -10
-#                        - label:
-#                            text:      "Fiels"
-#                            styles:     style_temp
-#                            text_font:  font_regular
-#                            #align:      BOTTOM_RIGHT
-#                            align:      BOTTOM_MID
-#                            text_align: left
-#                            #transform_angle: 5
-#                            hidden:     true
-#                            id:         lvgl_temp_feels_name
-#                            
-#                # Temp min/max
-#                  - obj:
-#                      x:                75
-#                      y:                180
-#                      #x:               70
-#                      #y:               225
-#                      #transform_angle: 300
-#                      styles:           style_object
-#                      border_width:     0
-#                      pad_left:         0
-#                      height:           60
-#                      width:            90
-#                      bg_opa:           0
-#                      #outline_width:    1        # dev settings
-#                      #outline_color:    0xFFFFFF # dev settings
-#                      widgets:
-#                        - label:
-#                            id:         lvgl_temp_max_boot
-#                            text:      " "
-#                            styles:     style_temp
-#                            text_font:  fontcelsius
-#                            align:      TOP_RIGHT
-#                            text_align: left
-#                        - label:
-#                            text:      '\'
-#                            styles:     style_temp
-#                            text_font:  fontcelsius
-#                            align:      CENTER
-#                            text_align: center
-#                            hidden:     true
-#                            id:         lvgl_minmax_delimeter
-#                        - label:
-#                            id:         lvgl_temp_min_boot
-#                            text:      " "
-#                            styles:     style_temp
-#                            text_font:  fontcelsius
-#                            align:      BOTTOM_LEFT
-#                            text_align: right
-#                            
-#                # Additional info
-#                # UVI / Wind / Cloud / Rain / Snow
-#                  - obj:
-#                      x:               150
-#                      y:               220
-#                      #x:               140
-#                      #y:               275
-#                      #transform_angle: 315
-#                      styles:          style_object
-#                      border_width:    0
-#                      pad_left:        0
-#                      height:          90
-#                      width:           95
-#                      bg_opa:          0
-#                      #outline_width:   1        # dev settings
-#                      #outline_color:   0xFFFFFF # dev settings
-#                      widgets:
-#                        - label:
-#                            text:      " "
-#                            styles:     style_temp
-#                            text_font:  font_regular
-#                            align:      TOP_MID
-#                            text_align: center
-#                            id:         lvgl_weather_unit_boot
-#                            #y:          20
-#                            #x:         -10
-#                        - obj:
-#                            layout:
-#                              type:            FLEX    
-#                              pad_row:         0
-#                              pad_column:      0
-#                              flex_align_main: CENTER
-#                            x:               7
-#                            align:           CENTER
-#                            #transform_angle: 315
-#                            styles:          style_object
-#                            border_width:    0
-#                            height:          60
-#                            width:           80
-#                            bg_opa:          0
-#                            #outline_width:   1        # dev settings
-#                            #outline_color:   0xFFFFFF # dev settings
-#                            widgets:
-#                              - label:
-#                                  text:      " "
-#                                  styles:     style_temp
-#                                  text_font:  fonttemp_mid2
-#                                  text_align: right
-#                                  id:         lvgl_weather_value_boot
-#                                  
-#                              - label:
-#                                  text:      " "
-#                                  styles:     style_temp
-#                                  text_font:  fontcelsius
-#                                  text_align: left
-#                                  pad_top:    18
-#                                  pad_right:   10
-#                                  id:         lvgl_weather_value_dec_boot
-#  
-#                        - label:
-#                            text:      " "
-#                            styles:     style_temp
-#                            text_font:  font_regular
-#                            align:      BOTTOM_MID
-#                            text_align: center
-#                            id:         lvgl_weather_info_boot
-#                            #transform_angle: 5
-#                            
-#                # Forecast day 1
-#                  - obj:
-#                      x:               205
-#                      y:               290
-#                      #x:               140
-#                      #y:               275
-#                      #transform_angle: 315
-#                      styles:          style_object
-#                      border_width:    0
-#                      pad_left:        0
-#                      height:          100
-#                      width:           100
-#                      bg_opa:          0
-#                      #outline_width:   1        # dev settings
-#                      #outline_color:   0xFFFFFF # dev settings
-#                      widgets:
-#                        - label:
-#                            text:      "\U0000006A"
-#                            #text:      " "
-#                            align:      CENTER
-#                            text_align: CENTER
-#                            text_font:  fontweater_large_test
-#                            text_color: 0xe8e8e8
-#                            id:         lvgl_icon_day1_boot
-#                            hidden:     true
-#  
-#                # AQI
-#                  - obj:
-#                      x:               240
-#                      y:               390
-#                      #x:               140
-#                      #y:               275
-#                      #transform_angle: 315
-#                      styles:          style_object
-#                      border_width:    0
-#                      pad_left:        0
-#                      height:          80
-#                      width:           90
-#                      bg_opa:          0
-#                      #outline_width:   1        # dev settings
-#                      #outline_color:   0xFFFFFF # dev settings
-#                      widgets:
-#                        - label:
-#                            #text:      "\U000F069C"
-#                            text:      "😊"
-#                            align:      TOP_MID
-#                            text_align: center
-#                            text_font:  emoticon_font
-#                            text_color: 0xe8e8e8
-#                            id:         lvgl_icon_emoticon
-#                            #x: -10
-#                        - label:
-#                            text:      "2.3 AQI"
-#                            styles:     style_temp
-#                            text_font:  font_regular
-#                            align:      BOTTOM_MID
-#                            text_align: center
-#                            id:         lvgl_aiq_label
-#                  - obj:
-#                      #id:           lvgl_boot_info
-#                      #hidden:       false
-#                      styles:       style_object
-#                      border_width: 0
-#                      pad_all:      0
-#                      height:       100%
-#                      width:        100%
-#                      bg_color:      0x000000 # black
-#                      bg_opa:       0
-#                      scrollbar_mode: "OFF"
-#                      #layout: 
-#                      #  type:       GRID
-#                      #  grid_columns: [FR(80), FR(400)]
-#                      #  grid_rows:    [FR(20), FR(20), FR(20)]
-#                      #  pad_row:      0
-#                      on_press:
-#                        - lvgl.widget.hide: boot_screen
-
     #-------------------------------------------
     # PAGE - MAIN
     #------------------------------------------- 
@@ -1627,6 +1054,7 @@ lvgl:
               grid_columns: [FR(235), FR(245)]
               grid_rows:    [FR(240), FR(240)]
               pad_row:      0
+              multiple_widgets_per_cell: true
             width:          100%
             height:         235
             bg_opa:         TRANSP
@@ -1649,11 +1077,12 @@ lvgl:
                   pad_all:       0
                   grid_cell_row_pos:     0
                   grid_cell_column_pos:  0
-         
+                  
                   layout: 
                     type:         GRID
                     grid_columns: [FR(80), FR(80)]
                     grid_rows:    [FR(80), FR(20), FR(20), FR(10), FR(20), FR(30)]
+                    multiple_widgets_per_cell: true
                   scrollbar_mode: "OFF"
                   widgets:
                     - obj:
@@ -2017,6 +1446,7 @@ lvgl:
                                     type:         GRID
                                     grid_columns: [FR(112), FR(112)]
                                     grid_rows:    [FR(35), FR(50), FR(50), FR(65)]
+                                    multiple_widgets_per_cell: true
                                   widgets:
                                   # Humidity
                                     - label:
@@ -2245,6 +1675,7 @@ lvgl:
               grid_columns: [FR(120), FR(120), FR(120), FR(120)]
               grid_rows:    [FR(180)]
               pad_row:      0
+              multiple_widgets_per_cell: true
             width:          100%
             height:         170
             bg_opa:         TRANSP
@@ -2276,6 +1707,7 @@ lvgl:
                     grid_columns: [FR(120)]
                     grid_rows:    [FR(10), FR(55), FR(18), FR(12), FR(20)]
                     pad_row:      0
+                    multiple_widgets_per_cell: true
                   scrollbar_mode: "OFF"
 
                   widgets:
@@ -2356,6 +1788,7 @@ lvgl:
                     grid_columns: [FR(120)]
                     grid_rows:    [FR(10), FR(55), FR(18), FR(12), FR(20)]
                     pad_row:      0
+                    multiple_widgets_per_cell: true
                   scrollbar_mode: "OFF"
 
                   widgets:
@@ -2436,6 +1869,7 @@ lvgl:
                     grid_columns: [FR(120)]
                     grid_rows:    [FR(10), FR(55), FR(18), FR(12), FR(20)]
                     pad_row:      0
+                    multiple_widgets_per_cell: true
                   scrollbar_mode: "OFF"
 
                   widgets:
@@ -2516,6 +1950,7 @@ lvgl:
                     grid_columns: [FR(120)]
                     grid_rows:    [FR(10), FR(55), FR(18), FR(12), FR(20)]
                     pad_row:      0
+                    multiple_widgets_per_cell: true
                   scrollbar_mode: "OFF"
 
                   widgets:
@@ -2618,7 +2053,7 @@ lvgl:
               grid_rows:    [FR(380)]
               pad_row:      0
               pad_column:   0
-              
+              multiple_widgets_per_cell: true
             widgets:
               #-------------------------------------------
               # AQI METER
@@ -2925,16 +2360,16 @@ lvgl:
     # PAGE - VOICE ASSISTANT
     #-------------------------------------------      
     - id: page_voice
-      layout: 
-        type:       FLEX
-        pad_row:    0
-        pad_column: 0
       width:        100%
       pad_all:      0
       styles:       style_object
       border_width: 0
       outline_pad:  0
       radius:       0
+      layout: 
+        type:       FLEX
+        pad_row:    0
+        pad_column: 0
       widgets:
       #-------------------------------------------
       # VOICE ASSISTANT
@@ -2980,6 +2415,7 @@ lvgl:
               grid_rows:    [FR(320)]
               pad_row:      0
               pad_column:   0
+              multiple_widgets_per_cell: true
             widgets:
             #-------------------------------------------
             # VOICE ASSISTANT GRAPHIC
@@ -3000,13 +2436,13 @@ lvgl:
                   shadow_spread: 20
                   bg_opa:        80%
                   id: lvgl_round_voice
-                  layout:
-                    type:               flex
-                    pad_row:            4
-                    pad_column:         4px
-                    flex_align_main:    center
-                    flex_align_cross:   CENTER
-                    flex_align_track:   CENTER
+                  #layout:
+                  #  type:               flex
+                  #  pad_row:            4
+                  #  pad_column:         4px
+                  #  flex_align_main:    center
+                  #  flex_align_cross:   CENTER
+                  #  flex_align_track:   CENTER
               #- spinner:
               #    grid_cell_column_pos: 0
               #    grid_cell_row_pos:    0
@@ -3619,18 +3055,18 @@ lvgl:
     #-------------------------------------------      
     - id: page_2
       layout: 
-        type:       FLEX
-        pad_row:    0
-        pad_column: 0
-      width:        100%
-      styles:       style_object
-      border_width: 0
-      outline_pad:  0
-      radius:       0
-      pad_left:     5
-      pad_top:      20
-      pad_right:     0
-      pad_bottom:    0
+        type:          FLEX
+        pad_row:       0
+        pad_column:    0
+      width:           100%
+      styles:          style_object
+      border_width:    0
+      outline_pad:     0
+      radius:          0
+      pad_left:        5
+      pad_top:         20
+      pad_right:       0
+      pad_bottom:      0
       scrollbar_mode: "OFF"
       #pad_column:   5
       #outline_width: 1        # dev settings
@@ -3673,6 +3109,7 @@ lvgl:
               grid_rows:    [FR(30), FR(30), FR(30)]
               pad_row:      0
               pad_column:   0
+              multiple_widgets_per_cell: true
             #scrollbar_mode: "OFF"
             widgets:
             # Current temperature
@@ -4136,7 +3573,6 @@ lvgl:
                         bg_color:       0xffffff
                         pad_left:       5
                         
-                        
         #-------------------------------------------
         # VALVES WINDOW
         #-------------------------------------------
@@ -4287,6 +3723,7 @@ lvgl:
                   width:      100
                   pad_all:    5
 
+
       #-------------------------------------------
       # AC LIVING ROOM
       #-------------------------------------------
@@ -4324,6 +3761,7 @@ lvgl:
               grid_rows:    [FR(30), FR(30), FR(30)]
               pad_row:      0
               pad_column:   0
+              multiple_widgets_per_cell: true            
             #scrollbar_mode: "OFF"
             widgets:
             # Current temperature
@@ -4950,6 +4388,7 @@ lvgl:
               grid_rows:    [FR(30), FR(30), FR(30)]
               pad_row:      0
               pad_column:   0
+              multiple_widgets_per_cell: true
             #scrollbar_mode: "OFF"
             widgets:
             # Current temperature
@@ -6211,6 +5650,7 @@ lvgl:
                     grid_rows:    [FR(30), FR(30), FR(30)]
                     pad_row:      0
                     pad_column:   0
+                    multiple_widgets_per_cell: true
                   widgets:
                     # battery
                     - label:
@@ -6852,7 +6292,7 @@ font:
     id: font_regular
     size: 24
     bpp: 2
-    glyphs: '~-_:°/.0123456789ABCDEFGHIJKLMNOQPRSTUVWXYZabcdefghijklmnoprstuvwxyz³₂?µä, ĎýÝžŽášŠľóČčíĽúéťňďôÍÚŤ%()' 
+    glyphs: '~-_:°/.0123456789ABCDEFGHIJKLMNOQPRSTUVWXYZabcdefghijklmnoprstuvwxyz³₂?µä, ÁĎýÝžŽášŠľóČčíĽúéťňďôÍÚŤ%()' 
     extras:
       - file: 'fonts/materialdesignicons-webfont.ttf'
         glyphs: [
@@ -6906,8 +6346,10 @@ font:
           "\U000F058E", # DRY
           "\U000F0717", # COOL
           "\U000F0210", # FAN
+
           "\U000F0079", # mdi-battery (full)
-          
+
+
           "\U000F00E2", # SWEEPING
           "\U000F01AB", # MOPPING
           "\U000F12E5", # SWEEPING AND MOPPING
@@ -6954,7 +6396,16 @@ font:
     #extras:
     #  - file: 'fonts/materialdesignicons-webfont.ttf'
     glyphs: [
-      "\U000F08BE", # wifi status
+      "\U000F08FE", # signal 20%
+      "\U000F08F4", # signal 40%
+      "\U000F08F6", # signal 60%
+      "\U000F08F8", # signal 80%
+      "\U000F08FA", # signal 100%
+      "\U000F08F5", # signal 20 - 40%  no API
+      "\U000F08F7", # signal 60%  no API
+      "\U000F08F9", # signal 80%  no API
+      "\U000F08FB", # signal 100% no API
+      "\U000F08FD", # signal no wifi
       
       "\U000F007A", # mdi-battery-10
       "\U000F007B", # mdi-battery-20
