@@ -19,9 +19,8 @@
 # SUBTITUTIONS - basic definitions and description of the device
 #-------------------------------------------
 substitutions:
-  friendly_name: assistant-voice
-  device_name: assistant-voice
-  created_by: "StudioTiiM 2024"
+  device_name:         assistant-voice
+  created_by:         "StudioTiiM 2024-2025"
   device_description: "Voice assitantn HA"
 #-------------------------------------------
 # POWER CONSUMPTION 
@@ -259,7 +258,12 @@ substitutions:
   # Circuit: The 4-inch screen relay and I2S audio are shared IO ports, IO1, IO2, and IO40. If audio is needed, the 0 ohm resistors R25, R26, and R27 should be moved to R21, R22, and R23.
   # Speaker: UNISON U3608B35U 8Ω 1.5W 701
   # Chip: NS4168
-  # Modification: Unsolder resistor 1MΩ on CTRL pin and solder 3V3 47Ω CTRL
+  # Modification: Unsolder resistor 1MΩ on CTRL pin and solder 3V3 22Ω CTRL
+   # CTRL pin: The input channel of NS4168 is selected by setting the level of the CTRL pin. 
+    # Left channel 0.9V-1.15V; 
+    # Right channel 1.5V-VDD. 
+    # Shutdown: 0 - 0.4V
+
    # Pinout:                                                                                                                                                                                                                                                                                     
     # N.| CONNECTED | DESCRIPTION     | Pin   | Scheme | Pin | DESCRIPTION     | CONNECTED | N.
     #                                           +----+
@@ -371,8 +375,8 @@ substitutions:
   minimum_display_brightness: "0.30"  # 
 
   # WHEATER
-  weather_humidity:     sensor.weather_station_humidity
-  weather_pressure:     sensor.weather_station_pressure
+  #weather_humidity:     sensor.weather_station_humidity
+  #weather_pressure:     sensor.weather_station_pressure
                         
   weather_condition:    weather.combined
   weather_forecast:     sensor.weather_forecast_voice
@@ -382,7 +386,7 @@ substitutions:
   # CALENDAR            
   calendar_event:       sensor.calendar_display
   calendar_nameday:     calendar.slovenske_mena
-  calendar_dayofweek:   sensor.dayoftheweek
+  #calendar_dayofweek:   sensor.dayoftheweek
                         
   # NEWS                
   breaking_news:        sensor.new_breaking_title
@@ -400,25 +404,25 @@ substitutions:
   circuit_atelier:      switch.power_atelier_switch_2
                         
   # SWITCHES            
-  switch_mediacenter:   switch.esp_gateway_socket_1
-  switch_poolfilter:    switch.power_socket_pool_socket1
+  switch_mediacenter:   switch.gateway_socket_2
+  switch_poolfilter:    switch.power_pool_relay1_pump
   switch_watering:      switch.well_pump_switch_irrigation
   switch_boiler:        switch.boiler_relay
   switch_kotol:         switch.heating_boiler
                         
   # LIGHTS              
-  light_livingroom:     light.light_rgbww
-  light_mediacenter:    light.light_ww
+  light_livingroom:     light.gateway_light_rgbww
+  light_mediacenter:    light.gateway_light_ww
   light_kitchensink:    switch.isa_kg03hl_ac10_left_switch_service
   light_bar:            switch.isa_kg03hl_ac10_middle_switch_service
   light_hall:           light.light_wall_relay
   light_bedroom:        light.postel_svetlo
   light_pantry:         light.light1_switch
-  light_pool:           light.power_socket_pool_light_pool
+  light_pool:           light.power_pool_light_pool
   
   
   # CLIMATE
-  climate_thermostat:   climate.thermostat
+  climate_thermostat:   climate.thermostat_thermostat
   climate_aclivingroom: climate.obyvacia_izba_klima
   climate_acatelier:    climate.atelier_klima
   thermostat_sensor:    sensor.thermostat_sensor
@@ -491,28 +495,21 @@ uart:
 i2s_audio:
   # SPEAKER
   - id:            i2s_out
-    i2s_lrclk_pin: 
-      number: $i2s_lrclk_pin # WS
-      #allow_other_uses: true
-    i2s_bclk_pin:  
-      number: $i2s_bclk_pin  # SCK
-      #allow_other_uses: true
+    i2s_lrclk_pin: $i2s_lrclk_pin # WS
+    i2s_bclk_pin:  $i2s_bclk_pin  # SCK
 
   # MICROPHONE    
   - id:            i2s_in
-    i2s_lrclk_pin: 
-      number: $i2s_lrclk_pin_in # WS
-      #allow_other_uses: true
-    i2s_bclk_pin:  
-      number: $i2s_bclk_pin_in  # SCK
-      #allow_other_uses: true
+    i2s_lrclk_pin: $i2s_lrclk_pin_in # WS
+    i2s_bclk_pin:  $i2s_bclk_pin_in  # SCK
     
 #-------------------------------------------
 # ESPHOME PLATFORM SETTINGS
 #-------------------------------------------
 esphome:
   name: "$device_name"
-  min_version: 2025.2.0
+  min_version: 2025.5.0
+  compile_process_limit: 3
   platformio_options:
     board_build.flash_mode:          dio
     #board_build.psram: true
@@ -521,7 +518,8 @@ esphome:
     board_build.arduino.memory_type: qio_opi
     board_build.psram_type:          opi
     board_upload.maximum_size:       16777216
-    board_upload.maximum_ram_size:   524288
+    #board_upload.maximum_ram_size:   524288
+    board_upload.maximum_ram_size:   8388608
     
     #build_unflags: -Werror=all
     #platform_packages:
@@ -580,88 +578,69 @@ esphome:
 #-------------------------------------------
 esp32:
   board: esp32-s3-devkitc-1
+  cpu_frequency: 240MHz
   variant: esp32s3
   flash_size: 16MB
   partitions: "default_16MB.csv"
   framework:
     type: esp-idf
-    #version: recommended
+    version: recommended
     #version: 5.3.1
     #platform_version: 6.8.1
     sdkconfig_options:
-      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
-      CONFIG_ESP32S3_DATA_CACHE_32KB:      "y"
+      #CONFIG_ESP32S3_DATA_CACHE_32KB:      "y"
+      CONFIG_ESP32S3_DATA_CACHE_64KB:      "y"
       CONFIG_ESP32S3_DATA_CACHE_LINE_64B:  "y"
       CONFIG_SPIRAM_FETCH_INSTRUCTIONS:    "y"
       CONFIG_SPIRAM_RODATA:                "y"
       
-      COMPILER_OPTIMIZATION_SIZE:          "y"
-      CONFIG_ESPTOOLPY_FLASHSIZE_16MB:     "y"
+      #COMPILER_OPTIMIZATION_SIZE:          "y"
+      #CONFIG_ESPTOOLPY_FLASHSIZE_16MB:     "y"
       
-      # add source: https://github.com/mikey60/home-assistant-voice-pe/blob/cb4186f814c31917c7021d57c2e7315b5f00495f/home-assistant-voice.yaml#L1542
-      # 40kb free DRAM
+      CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
+      CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY:    "y"
+      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC:   "y"
+      CONFIG_MBEDTLS_SSL_PROTO_TLS1_3:     "y"  # TLS1.3 support isn't enabled by default in IDF 5.1.5
+      
+      ## add source: https://github.com/mikey60/home-assistant-voice-pe/blob/cb4186f814c31917c7021d57c2e7315b5f00495f/home-assistant-voice.yaml#L1542
+      ## 40kb free DRAM
       CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB:     "y"
       CONFIG_SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY: "y"
       CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP:      "y"
-      
-      # ERROR Error receiving acknowledge binary size: timed out
-      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "10"
-
-      # Settings based on https://github.com/espressif/esp-adf/issues/297#issuecomment-783811702
-      #CONFIG_ESP32_WIFI_STATIC_RX_BUFFER_NUM: "16"
-      #CONFIG_ESP32_WIFI_DYNAMIC_RX_BUFFER_NUM: "32"
-      #CONFIG_ESP32_WIFI_STATIC_TX_BUFFER: "y"
-      #CONFIG_ESP32_WIFI_TX_BUFFER_TYPE: "0"
-      #CONFIG_ESP32_WIFI_STATIC_TX_BUFFER_NUM: "8"
-      #CONFIG_ESP32_WIFI_CACHE_TX_BUFFER_NUM: "32"
-      #CONFIG_ESP32_WIFI_AMPDU_TX_ENABLED: "y"
-      #CONFIG_ESP32_WIFI_TX_BA_WIN: "16"
-      #CONFIG_ESP32_WIFI_AMPDU_RX_ENABLED: "y"
-      #CONFIG_ESP32_WIFI_RX_BA_WIN: "32"
-      #CONFIG_LWIP_MAX_ACTIVE_TCP: "16"
-      #CONFIG_LWIP_MAX_LISTENING_TCP: "16"
-      #CONFIG_TCP_MAXRTX: "12"
-      #CONFIG_TCP_SYNMAXRTX: "6"
-      #CONFIG_TCP_MSS: "1436"
-      #CONFIG_TCP_MSL: "60000"
-      #CONFIG_TCP_SND_BUF_DEFAULT: "65535"
-      #CONFIG_TCP_WND_DEFAULT:     "512000"  # Adjusted from linked settings to avoid compilation error
-      #CONFIG_TCP_RECVMBOX_SIZE:   "512"
-      #CONFIG_TCP_QUEUE_OOSEQ: "y"
-      #CONFIG_TCP_OVERSIZE_MSS: "y"
-      #CONFIG_LWIP_WND_SCALE: "y"
-      #CONFIG_TCP_RCV_SCALE: "3"
-      #CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "512"
       #
-      #CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
-      #CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
+      ## ERROR Error receiving acknowledge binary size: timed out
+      #CONFIG_ESP_TASK_WDT_TIMEOUT_S: "10"
+      #
+      #
+      #CONFIG_ESP32_PREFER_MEMORY_SHRINK: "1"
+      #CONFIG_ESP32_APPTRACE_ENABLE: "0"
+      #CONFIG_ESP32_STACK_CHECK: "0"
+      #
+      #CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
+      #
+      #
+      #CONFIG_COMPILER_OPTIMIZATION_PERF: "y"
+      #CONFIG_IDF_EXPERIMENTAL_FEATURES:  "y"
+      #CONFIG_BOOTLOADER_COMPILER_OPTIMIZATION_SIZE: "y"
+      #
+      #
+      #CONFIG_ESP_SYSTEM_ALLOW_RTC_FAST_MEM_AS_HEAP: y
+      #CONFIG_ESP_MAIN_TASK_STACK_SIZE: "8192"
+      ##CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY: y
       
-      CONFIG_ESP32_PREFER_MEMORY_SHRINK: "1"
-      CONFIG_ESP32_APPTRACE_ENABLE: "0"
-      CONFIG_ESP32_STACK_CHECK: "0"
-
-      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
-      CONFIG_MBEDTLS_SSL_PROTO_TLS1_3:   "y"  # TLS1.3 support isn't enabled by default in IDF 5.1.5
-      
-      CONFIG_COMPILER_OPTIMIZATION_PERF: "y"
-      CONFIG_IDF_EXPERIMENTAL_FEATURES:  "y"
-      CONFIG_BOOTLOADER_COMPILER_OPTIMIZATION_SIZE: "y"
-      
-      CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
-      CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
 
 psram:
   mode: octal
   speed: 80MHz
 
 #-------------------------------------------
-# LOGGER
+# LOGGER AND DEBUG
 #-------------------------------------------
 logger:
   baud_rate: 0
   #tx_buffer_size: 256
   #hardware_uart : UART0
-  level: DEBUG 
+  #level: WARN 
   # hardware_uart: USB_SERIAL_JTAG
   # HW UART ENABLE 
    # GPIO43-U0_TXD 
@@ -671,7 +650,7 @@ logger:
   #  # [00:00:00][W][component:204]: Component xxxxxx took a long time for an operation (x.xx s).
   #  # [00:00:00][W][component:205]: Components should block for at most 20-30ms.
   #  # Source: https://github.com/esphome/issues/issues/4717
-    component:                 ERROR
+    component:                  ERROR
   #  lvgl:                      ERROR
   #  homeassistant.text_sensor: WARN
   #  text_sensor:               WARN
@@ -679,7 +658,10 @@ logger:
     homeassistant.text_sensor:  WARN
    
   #  sm300d2:                   WARN
-    
+   
+#debug:
+#  update_interval: 5s
+
 #-------------------------------------------
 # API AND HTTP
 #-------------------------------------------
@@ -687,25 +669,28 @@ api:
   reboot_timeout: 6h
 # Client connected to HA status LVGL
   on_client_connected:
-    - if:
-        condition:
-          binary_sensor.is_on: status_online
-        then:
-          - lvgl.widget.show: lvgl_online_status
-          - component.update: select_room
-          #- component.update: sm300d2_aiq
-          #- delay: 500ms
-          #- lambda: ESP_LOGI("script", "MIRCOWAKEWORLD START");
-          - micro_wake_word.start:
+    then: 
+      - script.execute: script_wifi
+      - if:
+          condition:
+            binary_sensor.is_on: status_online
+          then:
+            #- lvgl.widget.show: lvgl_online_status
+            - component.update: select_room
+            #- component.update: sm300d2_aiq
+            #- delay: 500ms
+            #- lambda: ESP_LOGI("script", "MIRCOWAKEWORLD START");
+            - micro_wake_word.start:
           
   on_client_disconnected:
     then:
+      - script.execute: script_wifi
       - voice_assistant.stop: 
-      - if:
-          condition:
-            binary_sensor.is_off: status_online
-          then:
-            - lvgl.widget.hide: lvgl_online_status
+      #- if:
+      #    condition:
+      #      binary_sensor.is_off: status_online
+      #    then:
+      #      #- lvgl.widget.hide:   lvgl_online_status
           
 http_request:
   verify_ssl: false
@@ -723,11 +708,17 @@ ota:
 wifi:
   ssid:        !secret wifi_ssid
   password:    !secret wifi_password
+  use_psram:    true
   manual_ip:
-    static_ip: 192.168.31.196
-    gateway:   192.168.31.1
-    subnet:    255.255.255.0
-
+    static_ip: !secret ip_assistant_voice # 192.168.31.196
+    gateway:    192.168.31.1
+    subnet:     255.255.255.0
+    dns1:       192.168.31.1  # added no playing stream radio
+  on_connect:
+    - script.execute: script_wifi
+  on_disconnect:
+    - script.execute: script_wifi
+    
 #-------------------------------------------
 # PACKAGES
 #-------------------------------------------
@@ -736,7 +727,16 @@ packages:
   
 #-------------------------------------------
 # EXTERNAL AND CUSTOM COMPONENT
-# external_components:
+#external_components:
+
+#  - source: github://pr#12091
+#    components: [lvgl]
+#    refresh: 1h
+  #- source: 
+  #    type: local
+  #    path: /mnt/network_config/custom_component # wsl patch
+  #  components: [ lvgl ]
+  #  refresh: always
 #  - source: github://pr#8444
 #    components: [lvgl]
   #-------------------------------------------
@@ -798,7 +798,7 @@ packages:
 #-------------------------------------------
 online_image:
   #- url: "https://api.weather.com/v2/maps/dynamic?geocode=48.15,17.30&h=400&w=400&lod=8&apiKey=e1f10a1e78da46f5b10a1e78da96f525&product=twcRadarMosaic,648"
-  - url:            "http://homeassistant.local:8123/local/esphome/weather_map.jpg"
+  - url:            "http://homeassistant.local:8123/local/esphome/weather_map.png"
     format:          JPG
     id:              img_weathermap_on
     type:            RGB565
@@ -843,7 +843,7 @@ online_image:
     type:            RGB565
     buffer_size:     256
     #use_transparency: true
-    transparency: chroma_key 
+    transparency:    chroma_key 
     on_download_finished:
       - logger.log:  "Download vacuumimage finished"
     on_error:
@@ -912,21 +912,21 @@ speaker:
       - id:          media_spk_mixer_input
         timeout:     never
         num_channels: '1'
-    task_stack_in_psram: true
+    #task_stack_in_psram: true
         
   - platform:        resampler
     id:              media_spk_resampling_input
     output_speaker:  media_spk_mixer_input
     sample_rate:     16000
     bits_per_sample: 16
-    task_stack_in_psram: true
+    #task_stack_in_psram: true
     
   - platform:        resampler
     id:              announcement_spk_resampling_input
     output_speaker:  announcement_spk_mixer_input
     sample_rate:     16000
     bits_per_sample: 16
-    task_stack_in_psram: true
+    #task_stack_in_psram: true
 
 #-------------------------------------------
 # MICROPHONE
@@ -952,7 +952,8 @@ media_player:
   - platform: speaker
     name: "Speaker Media Player"
     id: speaker_media_player
-    task_stack_in_psram: true
+    #task_stack_in_psram: true
+    
     media_pipeline:
         speaker: media_spk_resampling_input
         num_channels: 1
@@ -967,19 +968,32 @@ media_player:
     volume_min:       0.1
     volume_max:       1
     files:
-      - id: wake_word_triggered_sound
-        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/wake_word_triggered.flac
+      - id:   wake_word_triggered_sound
+        #file: /mnt/network_config/
+        file: sounds/wake_word_triggered.flac
       - id: mute_switch_on_sound
-        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/mute_switch_on.flac
+        #file: /mnt/network_config/
+        file: sounds/mute_switch_on.flac
       - id: mute_switch_off_sound
-        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/mute_switch_off.flac
+        #file: /mnt/network_config/
+        file: sounds/mute_switch_off.flac
       - id: center_button_press_sound
-        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/center_button_press.flac
+        #file: /mnt/network_config/
+        file: sounds/center_button_press.flac
     on_announcement:
+      - micro_wake_word.stop:
       - mixer_speaker.apply_ducking:
           id: media_spk_mixer_input
           decibel_reduction: 20
           duration: 0.0s
+      - if:
+          condition:
+            - lambda: return id(speaker_media_player).volume != 0.8f;
+          then:
+            #- delay: 150ms
+            - media_player.volume_set:
+                id: speaker_media_player
+                volume: 0.8
     on_state:
       - if:
           condition:
@@ -1013,27 +1027,74 @@ media_player:
                 id:    lvgl_icon_mute_speaker
                 text: "\U000F057E"
 
+    on_play:
+      if:
+        condition:
+          - lambda: return id(speaker_media_player).volume != 0.8f;
+        then:
+          - delay: 250ms
+          - media_player.volume_set:
+              id: speaker_media_player
+              volume: 0.8
+    on_pause:
+      if:
+        condition:
+          - lambda: return id(speaker_media_player).volume != 0.0f;
+        then:
+          - media_player.volume_set:
+              id: speaker_media_player
+              volume: 0.0
+    on_idle:
+      - micro_wake_word.start:
+      - if:
+          condition:
+            - lambda: return id(speaker_media_player).volume != 0.0f;
+          then:
+            - media_player.volume_set:
+                id: speaker_media_player
+                volume: 0.0
+          
 #-------------------------------------------
 # VOICE ASSISTANT AND MICRO WAKE WORLD
 #-------------------------------------------
 micro_wake_word:
-  id:                mww
+  id:                   mww
+  stop_after_detection: false
   models:
-    - model:         okay_nabu
-  microphone:        mic_id  
-  vad:                                 # Voice Activity Detection model 
+    - model:            okay_nabu
+  microphone:           mic_id 
+  vad:
+    probability_cutoff: 0.05 
   on_wake_word_detected:
-    #- voice_assistant.start:
-    #    wake_word: !lambda return wake_word;
-    # If media played pause
     - if:
         condition:
-          or:
-            - media_player.is_playing:
-            - media_player.is_announcing:
+          voice_assistant.is_running:
         then:
-          - media_player.stop:
-              announcement: true
+          voice_assistant.stop:
+        else:
+          - if:
+              condition:
+                media_player.is_announcing:
+              then:
+                - media_player.stop:
+                    announcement: true
+                - script.execute:
+                    id: play_sound
+                    priority: true
+                    sound_file: !lambda return id(wake_word_triggered_sound);
+                - delay: 300ms
+                - voice_assistant.start:
+                    wake_word: !lambda return wake_word;
+              # Start the voice assistant and play the wake sound, if enabled
+              else:
+                - script.execute:
+                    id: play_sound
+                    priority: true
+                    sound_file: !lambda return id(wake_word_triggered_sound);
+                - delay: 300ms
+                - voice_assistant.start:
+                    wake_word: !lambda return wake_word;
+          
     # If LVGL paused turn on display      
     - if:
         condition: lvgl.is_paused
@@ -1044,28 +1105,24 @@ micro_wake_word:
           - lvgl.widget.hide: boot_screen
     - lvgl.widget.hide: boot_screen
     - lvgl.page.show:   page_voice
-    - delay: 100ms
-    #- script.execute:
-    #    id: play_sound
-    #    priority: true
-    #    sound_file: !lambda return id(wake_word_triggered_sound);
-    - media_player.speaker.play_on_device_media_file:
-        media_file: wake_word_triggered_sound
-        announcement: true
-    - delay: 300ms
-    - voice_assistant.start:
-        wake_word: !lambda return wake_word;
    
 voice_assistant:
   id:                      voice_assist
   microphone:              mic_id
-  #micro_wake_word:         mww
+  micro_wake_word:         mww
   media_player:            speaker_media_player
+  #use_wake_word: false
   #auto_gain: 31dBFS
   #speaker:                 speaker_id
   noise_suppression_level: 1.0
   volume_multiplier:       2.0
-  
+  conversation_timeout:    120s
+
+  on_client_connected:
+    - micro_wake_word.start
+  on_client_disconnected:
+    - voice_assistant.stop:
+    
   on_start:
     - mixer_speaker.apply_ducking:
         id: media_spk_mixer_input
@@ -1177,21 +1234,28 @@ voice_assistant:
   on_end:
     - wait_until:
         not:
-          voice_assistant.is_running
+          voice_assistant.is_running:
+    - micro_wake_word.start:
     - mixer_speaker.apply_ducking:
         id: media_spk_mixer_input
         decibel_reduction: 0
         duration: 1.0s
-    - wait_until:
-        not:
-          voice_assistant.is_running:
-    - micro_wake_word.start:
-    
-  #on_client_connected:
-    #- delay: 10s
-    #- micro_wake_word.start:
-  on_client_disconnected:
-    - voice_assistant.stop:
+
+  #on_end:
+  #  - wait_until:
+  #      condition:
+  #        - media_player.is_announcing:
+  #      timeout: 2s
+  #  - wait_until:
+  #      condition:
+  #        and:
+  #          - not:
+  #              media_player.is_announcing:
+  #          #- not:
+  #          #    speaker.is_playing:
+  #      timeout: 30s
+  #  - micro_wake_word.start:
+
 
 #-------------------------------------------
 # SCRIPTS
@@ -1261,43 +1325,44 @@ script:
               level: info
 
 
-#-------------------------------------------
-# ADDITIONAL WEATHER INFO IF CONDITION:
-# -99.9 Teplota               substr(0,5)
-# -99.9 Pocitová teplota      substr(5,5)
-# -99.9 Max teplota           substr(10,5)
-# -99.9 Min teplota           substr(15,5)
-# 999   Rýchlosť vetra        substr(20,3)
-# 999.9 Zrážky                substr(23,5)
-# 999   Vlhkosť               substr(28,3)
-# 999   Náraz vetra	          substr(31,3)
-# 99    Dažďový senzor        substr(34,3)
-# 999.9 Sneh                  substr(37,5)
-# 99.9  UV index              substr(42,5)
-# 9999  Tlak vzduchu          substr(47,4)
-# 999   Oblačnosť kombinovaná substr(51,3)
-# 999   Oblačnosť dnes        substr(54,3)
-# 999   PM10                  substr(57,3)
-# 999   PM2.5                 substr(60,3)
-# 9.999 Rádioaktivita         substr(63,5)
-# 999   Počet bleskov         substr(68,3)
-# 99.9  Viditeľnosť           substr(71,4)
-
-# Tabuľka údajov
-#   temp       |temp feel  |tempmax    |templow    |wind   |rain       |humid  |gust   |drop |snow       |uvi      |pressure |clouc  |cloud  |pm10   |pm25   |radiation  |light  |visible
-#   1     4    |7     10   |13    16   |19    22   |25     |29    32   |35     |39     |43   |46    49   |52  54   |57       |62     |66     |70     |74     |78         |84     |88  90
-#|0|1|2|3|4|5|6|7|8|9|1|1|1|1|1|1|1|1|1|1|2|2|2|2|2|2|2|2|2|2|3|3|3|3|3|3|3|3|3|3|4|4|4|4|4|4|4|4|4|4|5|5|5|5|5|5|5|5|5|5|6|6|6|6|6|6|6|6|6|6|7|7|7|7|7|7|7|7|7|7|8|8|8|8|8|8|8|8|8|8|9|9|
-#                     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
-#   1 2 3 4 5   1 2 3 4 5
-#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                    
-#|x| | |3|.|4| | | |4|.|2| | |1|0|.|1| | | |2|.|7| | | |0| | | |0|.|0| | |8|1| | | |0| |8|0| | | |0|.|0| | |0|.|0| |1|0|2|0| | |2|6| | |7|0| | |2|0| | | |1| |0|.|0|4|1| | | |0| |1|6|.|1|
-#|x|-|9|9|.|9| |-|9|9|.|9| |-|9|9|.|9| |-|9|9|.|9| |9|9|9| |9|9|9|.|9| |9|9|9| |9|9|9| |9|9| |9|9|9|.|9| |9|9|.|9| |9|9|9|9| |9|9|9| |9|9|9| |9|9|9| |9|9|9| |9|.|9|9|9| |9|9|9| |9|9|.|9|
-#
-#
-# x  1.5  -1.2  15.1  -0.0  33   0.0  83   3 80   0.0891.0 1024   6  65  47   3 0.061   0 16.1
-# x-99.9 -99.9 -99.9 -99.9 999 999.9 999 999 99 999.9 99.9 9999 999 999 999 999 9.999 999 99.9
-# x  1.0   1.7  15.1   1.0   1   0.0  80   3 80   0.0  0.1 1025   5  65  43   2 0.047   0 16.1
-#-------------------------------------------
+  #-------------------------------------------
+  # ADDITIONAL WEATHER INFO IF CONDITION:
+  # -99.9 Teplota               substr(0,5)
+  # -99.9 Pocitová teplota      substr(5,5)
+  # -99.9 Max teplota           substr(10,5)
+  # -99.9 Min teplota           substr(15,5)
+  # 999   Rýchlosť vetra        substr(20,3)
+  # 999.9 Zrážky                substr(23,5)
+  # 999   Vlhkosť               substr(28,3)
+  # 999   Náraz vetra	          substr(31,3)
+  # 99    Dažďový senzor        substr(34,3)
+  # 999.9 Sneh                  substr(37,5)
+  # 99.9  UV index              substr(42,5)
+  # 9999  Tlak vzduchu          substr(47,4)
+  # 999   Oblačnosť kombinovaná substr(51,3)
+  # 999   Oblačnosť dnes        substr(54,3)
+  # 999   PM10                  substr(57,3)
+  # 999   PM2.5                 substr(60,3)
+  # 9.999 Rádioaktivita         substr(63,5)
+  # 999   Počet bleskov         substr(68,3)
+  # 99.9  Viditeľnosť           substr(71,4)
+  
+  # Tabuľka údajov
+  #   temp       |temp feel  |tempmax    |templow    |wind   |rain       |humid  |gust   |drop |snow       |uvi      |pressure |clouc  |cloud  |pm10   |pm25   |radiation  |light  |visible
+  #   1     4    |7     10   |13    16   |19    22   |25     |29    32   |35     |39     |43   |46    49   |52  54   |57       |62     |66     |70     |74     |78         |84     |88  90
+  #|0|1|2|3|4|5|6|7|8|9|1|1|1|1|1|1|1|1|1|1|2|2|2|2|2|2|2|2|2|2|3|3|3|3|3|3|3|3|3|3|4|4|4|4|4|4|4|4|4|4|5|5|5|5|5|5|5|5|5|5|6|6|6|6|6|6|6|6|6|6|7|7|7|7|7|7|7|7|7|7|8|8|8|8|8|8|8|8|8|8|9|9|
+  #                     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
+  #   1 2 3 4 5   1 2 3 4 5
+  #----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                    
+  #|x| | |3|.|4| | | |4|.|2| | |1|0|.|1| | | |2|.|7| | | |0| | | |0|.|0| | |8|1| | | |0| |8|0| | | |0|.|0| | |0|.|0| |1|0|2|0| | |2|6| | |7|0| | |2|0| | | |1| |0|.|0|4|1| | | |0| |1|6|.|1|
+  #|x|-|9|9|.|9| |-|9|9|.|9| |-|9|9|.|9| |-|9|9|.|9| |9|9|9| |9|9|9|.|9| |9|9|9| |9|9|9| |9|9| |9|9|9|.|9| |9|9|.|9| |9|9|9|9| |9|9|9| |9|9|9| |9|9|9| |9|9|9| |9|.|9|9|9| |9|9|9| |9|9|.|9|
+  #
+  #
+  # x  1.5  -1.2  15.1  -0.0  33   0.0  83   3 80   0.0891.0 1024   6  65  47   3 0.061   0 16.1
+  # x-99.9 -99.9 -99.9 -99.9 999 999.9 999 999 99 999.9 99.9 9999 999 999 999 999 9.999 999 99.9
+  # x  1.0   1.7  15.1   1.0   1   0.0  80   3 80   0.0  0.1 1025   5  65  43   2 0.047   0 16.1
+  # x  2.6  -0.7   7.6   1.3   2   0.0  64   4 80   0.0  1.0 1017  38  71   9   0 0.105   0 16.1
+  #-------------------------------------------
   - id: additional_weather_info
     mode: restart
     then:
@@ -1492,8 +1557,125 @@ script:
                   id: lvgl_weather_value_dec_boot
                   text: " "
 
-debug:
-  update_interval: 5s
+ #-------------------------------------------
+ # WIFI AND API
+ #-------------------------------------------
+  - id:   script_wifi
+    mode: restart
+    then:
+      - if:
+          condition:
+            - wifi.connected:
+          then:
+            - component.update: wifisignal
+            - if:
+                condition:
+                  - api.connected:
+                then:
+                  - component.update: wifisignal
+                  - if:
+                      condition:
+                        sensor.in_range:
+                          id: wifisignal
+                          above: -50
+                      then:
+                        lvgl.label.update:
+                          id:    label_signal_icon
+                          text: "\U000F08FA"
+                  - if:
+                      condition:
+                        sensor.in_range:
+                          id: wifisignal
+                          above: -57
+                          below: -50
+                      then:
+                        lvgl.label.update:
+                          id:    label_signal_icon
+                          text: "\U000F08F8"
+                  - if:
+                      condition:
+                        sensor.in_range:
+                          id: wifisignal
+                          above: -64
+                          below: -57
+                      then:
+                        lvgl.label.update:
+                          id:    label_signal_icon
+                          text: "\U000F08F6"
+                  - if:
+                      condition:
+                        sensor.in_range:
+                          id: wifisignal
+                          above: -71
+                          below: -64
+                      then:
+                        lvgl.label.update:
+                          id:    label_signal_icon
+                          text: "\U000F08F4"
+                  - if:
+                      condition:
+                        sensor.in_range:
+                          id: wifisignal
+                          below: -71
+                      then:
+                        lvgl.label.update:
+                          id:    label_signal_icon
+                          text: "\U000F08FE"
+                else:
+                  - component.update: wifisignal
+                  - if:
+                      condition:
+                        sensor.in_range:
+                          id: wifisignal
+                          above: -50
+                      then:
+                        lvgl.label.update:
+                          id:    label_signal_icon
+                          text: "\U000F08FB"
+                  - if:
+                      condition:
+                        sensor.in_range:
+                          id: wifisignal
+                          above: -57
+                          below: -50
+                      then:
+                        lvgl.label.update:
+                          id:    label_signal_icon
+                          text: "\U000F08F9"
+                  - if:
+                      condition:
+                        sensor.in_range:
+                          id: wifisignal
+                          above: -64
+                          below: -57
+                      then:
+                        lvgl.label.update:
+                          id:    label_signal_icon
+                          text: "\U000F08F7"
+                  - if:
+                      condition:
+                        sensor.in_range:
+                          id: wifisignal
+                          above: -71
+                          below: -64
+                      then:
+                        lvgl.label.update:
+                          id:    label_signal_icon
+                          text: "\U000F08F5"
+                  - if:
+                      condition:
+                        sensor.in_range:
+                          id: wifisignal
+                          below: -71
+                      then:
+                        lvgl.label.update:
+                          id:    label_signal_icon
+                          text: "\U000F08F5"
+          else:
+            - lvgl.label.update:
+                id:    label_signal_icon
+                text: "\U000F08FD"
+                
 #-------------------------------------------
 # SENSORS
 #-------------------------------------------
@@ -1501,13 +1683,13 @@ sensor:
  #-------------------------------------------
  # Debug Heap Free
  #-------------------------------------------
-  - platform: debug
-    free:
-      name: "Heap Free"
-      filters:
-        multiply: 0.001
-      accuracy_decimals: 0
-      unit_of_measurement: kb
+  # - platform: debug
+  #   free:
+  #     name: "Heap Free"
+  #     filters:
+  #       multiply: 0.001
+  #     accuracy_decimals: 0
+  #     unit_of_measurement: kb
     #block:
     #  name: "Heap Max Block"
     #  filters:
@@ -1541,21 +1723,21 @@ sensor:
   #  lambda: |-
   #    return heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024.0;
 
-  #- platform: template
-  #  name: "Internal RAM Free"
-  #  unit_of_measurement: "kb"
-  #  accuracy_decimals: 0
-  #  update_interval: 10s
-  #  entity_category: diagnostic
-  #  lambda: |-
-  #    return heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024.0;
+  - platform: template
+    name: "Internal RAM Free"
+    unit_of_measurement: "kb"
+    accuracy_decimals: 0
+    update_interval: 10s
+    entity_category: diagnostic
+    lambda: |-
+      return heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024.0;
   
  #-------------------------------------------
  # Wifi signal component
  #-------------------------------------------
   - platform:            wifi_signal
-    name:               "${friendly_name} Signal"
-    update_interval:     320s
+    name:               "Signal"
+    update_interval:     never
     id:                  wifisignal
     on_value:
       then :
@@ -1631,7 +1813,7 @@ sensor:
     variant:             AHT20
     id:                  aht10_component
     temperature:
-      name:             "${friendly_name} Temperature"
+      name:             "Temperature"
       id:                aiq_temperature
       accuracy_decimals: 1
       filters:
@@ -1649,7 +1831,7 @@ sensor:
               args:   [ 'x' ]
 
     humidity:
-      name:             "${friendly_name} Humidity"
+      name:             "Humidity"
       accuracy_decimals: 0
       id:                aiq_humidity
       filters:
@@ -1679,8 +1861,8 @@ sensor:
  #-------------------------------------------
  # BH1750 GY-302 lux meter
  #------------------------------------------- 
-  - platform:            bh1750
-    name:           "${friendly_name} Illuminance"
+  - platform:        bh1750
+    name:           "Illuminance"
     id:              ambient_light
     address:         0x23
     update_interval: 15s
@@ -1741,16 +1923,16 @@ sensor:
     #  accuracy_decimals: 1
   
     co2:
-      name: "${friendly_name} CO2"
-      id:    aiq_co2
+      name:                 "CO2"
+      id:                    aiq_co2
       filters:
         - quantile:
-            window_size: 4
-            send_every: 4
-            send_first_at: 1
-            quantile: .5
-        - lambda: 'return min((float)5001.0, x);' # No value lower than 0
-        - filter_out: 5001.0
+            window_size:     4
+            send_every:      4
+            send_first_at:   1
+            quantile:       .5
+        - lambda:          'return min((float)5001.0, x);' # No value lower than 0
+        - filter_out:       5001.0
       on_value:
         # value
         - lvgl.label.update:
@@ -1768,14 +1950,14 @@ sensor:
         - delay: 50ms
         - component.update: aqi_final
     tvoc:
-      name: "${friendly_name} TVOC"
-      id: aiq_tvoc
+      name: "TVOC"
+      id:    aiq_tvoc
       filters:
         - quantile:
-            window_size: 4
-            send_every: 4
+            window_size:   4
+            send_every:    4
             send_first_at: 3
-            quantile: .5
+            quantile:     .5
         - lambda: 'return min((float)2001.0, x);' # No value lower than 0
         - filter_out: 2001.0
       on_value:
@@ -1790,18 +1972,18 @@ sensor:
             id: lvgl_obj_tvoc
             hidden: false
     pm_2_5:
-      name: "${friendly_name} PM2.5"
+      name: "PM2.5"
       id:    aiq_pm2_5
       filters:
         - quantile:
-            window_size: 4
-            send_every: 4
+            window_size:   4
+            send_every:    4
             send_first_at: 1
-            quantile: .8
+            quantile:     .8
         - lambda: 'return min((float)101.0, x);' # No value lower than 0
         - filter_out: 101.0
     pm_10_0:
-      name: "${friendly_name} PM10"
+      name: "PM10"
       id:    aiq_pm10
       filters:
         - quantile:
@@ -1811,8 +1993,15 @@ sensor:
             quantile: .8
         - lambda: 'return min((float)101.0, x);' # No value lower than 0
         - filter_out: 101.0
+      on_value:
+        - lvgl.label.update:
+            id: lvgl_aiq_pm
+            text: !lambda |-
+              char buffer[16];
+              snprintf(buffer, sizeof(buffer), "%.0f/%.0f", id(aiq_pm2_5).state, id(aiq_pm10).state);
+              return std::string(buffer);
     formaldehyde:
-      name: "${friendly_name} Formaldehyde"
+      name: "Formaldehyde"
       id: aiq_ch2o
       filters:
         - quantile:
@@ -1839,9 +2028,9 @@ sensor:
   #------------------------------------------- 
   # gases and particulare
   - platform:            template
-    name: "${friendly_name} AQI VOC"
+    name: "AQI VOC"
     id: aqi_voc
-    #internal: true
+    internal: true
     accuracy_decimals: 0
     update_interval: never
     lambda: |-
@@ -1891,127 +2080,58 @@ sensor:
       
   # Temperature and Humidity
   - platform:            template
-    name: "${friendly_name} AQI Climate"
+    name: "AQI Climate"
     id: aqi_climate
-    #internal: true
+    internal: true
     accuracy_decimals: 0
     update_interval: never 
-    #lambda: |-
-    #    float temperature = id(aiq_temperature).state;
-    #    float humidity = id(aiq_humidity).state;
-    #    
-    #    // Tabuľka AQI podľa teploty a vlhkosti
-    #    const float aqi_table[9][14] = {
-    #      {500, 400, 300, 200, 200, 200, 200, 300, 400, 400, 500, 500, 500, 500},  // 90%
-    #      {400, 300, 100, 100, 100, 100, 100, 200, 300, 400, 400, 400, 500,   0},  // 80%
-    #      {400, 300, 200, 100,   0,   0,   0, 100, 200, 300, 400, 400, 500,   0},  // 70%
-    #      {400, 300, 200, 100,   0,   0,   0,  50, 100, 200, 300, 400, 500,   0},  // 60%
-    #      {400, 300, 200, 100,   0,   0,   0,   0,  50, 100, 300, 400, 500,   0},  // 50%
-    #      {500, 400, 400, 300, 200, 150, 150, 100, 100, 200, 300, 400, 500,   0},  // 40%
-    #      {500, 400, 400, 300, 300, 300, 300, 300, 300, 300, 300, 400, 500,   0},  // 30%
-    #      {500, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 500,   0},  // 20%
-    #      {500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,   0}   // 10%
-    #      //16   17   18   19   20   21   22   23   24   25   26   27   28
-    #    };
-    #     
-    #    // Vyhľadanie AQI hodnoty na základe vlhkosti
-    #    int humidity_index = 0;
-    #    if (humidity >= 90) humidity_index = 0;
-    #    else if (humidity >= 80) humidity_index = 1;
-    #    else if (humidity >= 70) humidity_index = 2;
-    #    else if (humidity >= 60) humidity_index = 3;
-    #    else if (humidity >= 50) humidity_index = 4;
-    #    else if (humidity >= 40) humidity_index = 5;
-    #    else if (humidity >= 30) humidity_index = 6;
-    #    else if (humidity >= 20) humidity_index = 7;
-    #    else humidity_index = 8;
-    #    
-    #    // Určenie AQI na základe teploty
-    #    int temp_index = 0;
-    #    if (temperature >= 28) temp_index = 13;
-    #    else if (temperature >= 27) temp_index = 12;
-    #    else if (temperature >= 26) temp_index = 11;
-    #    else if (temperature >= 25) temp_index = 10;
-    #    else if (temperature >= 24) temp_index = 9;
-    #    else if (temperature >= 23) temp_index = 8;
-    #    else if (temperature >= 22) temp_index = 7;
-    #    else if (temperature >= 21) temp_index = 6;
-    #    else if (temperature >= 20) temp_index = 5;
-    #    else if (temperature >= 19) temp_index = 4;
-    #    else if (temperature >= 18) temp_index = 3;
-    #    else if (temperature >= 17) temp_index = 2;
-    #    else if (temperature >= 16) temp_index = 1;
-    #    else temp_index = 0;
-    #    
-    #    // Lineárna interpolácia medzi teplotami
-    #    float ratio = (temperature - (15 + temp_index)) / (16 + temp_index - (15 + temp_index));
-    #    
-    #    // Výpočet interpolovanej hodnoty AQI
-    #    float interpolated_aqi = aqi_table[humidity_index][temp_index] + ratio * (aqi_table[humidity_index][temp_index + 1] - aqi_table[humidity_index][temp_index]);
-    #    
-    #    return interpolated_aqi;
-    lambda: |-
+    lambda: |-     
       float temperature = id(aiq_temperature).state;
       float humidity = id(aiq_humidity).state;
       
-      const float aqi_table[9][14] = {
-        {500, 400, 300, 200, 200, 200, 200, 300, 400, 400, 500, 500, 500, 500}, //80
-        {400, 300, 100, 100, 100, 100, 100, 200, 300, 400, 400, 400, 500,   0}, //70
-        {400, 300, 200, 100,   0,   0,   0, 100, 200, 300, 400, 400, 500,   0}, //60
-        {400, 300, 200, 100,   0,   0,   0,  50, 100, 200, 300, 400, 500,   0}, //50
-        {400, 300, 200, 100,   0,   0,   0,   0,  50, 100, 300, 400, 500,   0}, //40
-        {500, 400, 400, 300, 200, 150, 150, 100, 100, 200, 300, 400, 500,   0}, //30
-        {500, 400, 400, 300, 300, 300, 300, 300, 300, 300, 300, 400, 500,   0}, //20
-        {500, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 500,   0}, //10
-        {500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,   0} 
-      // 16   17   18   19   20   21   22   23   24   25   26   27   28
+      // Orezanie vstupov
+      if (temperature < 16.0) temperature = 16.0;
+      if (temperature > 29.5) temperature = 29.5;
+      if (humidity < 30.0) humidity = 30.0;
+      if (humidity > 90.0) humidity = 90.0;
+      
+      // Zaokrúhlenie na najbližšiu hodnotu
+      int t_index = round((temperature - 16.0) / 0.5);  // 0..28
+      int h_index = round((90.0 - humidity) / 5.0);     // 0..16
+      
+      
+      // Tabuľka AQI hodnôt [riadky = vlhkosť, stĺpce = teplota]  
+      const float aqi_table[13][28] = {
+      //16.0 16.5 17.0 17.5 18.0 18.5 19.0 19.5 20.0 20.5 21.0 21.5 22.0 22.5 23.0 23.5 24.0 24.5 25.0 25.5 26.0 26.5 27.0 27.5 28.0 28.5 29.0 29.5   temp/humi
+      //   1    2    3    4    5    6    7    8    9   10   11   12   13   14   15   16   17   18   19   20   21   22   23   24   25   26   27   28   index
+        {500, 450, 400, 350, 300, 250, 200, 200, 200, 200, 200, 200, 200, 250, 300, 325, 350, 375, 400, 425, 450, 475, 500, 500, 500, 500, 500, 500}, // 1  90%
+        {450, 400, 350, 275, 225, 165, 125, 115, 100, 100, 105, 110, 115, 150, 180, 175, 200, 250, 265, 300, 300, 350, 400, 450, 475, 500, 500, 500}, // 2  85%
+        {400, 350, 300, 200, 150, 150,  50,  25,   0,  25,  35,  50,  75, 100, 100, 150, 175, 200, 200, 250, 250, 300, 350, 400, 425, 450, 500, 500}, // 3  80%
+        {400, 350, 300, 250, 150, 100,  50,  25,   0,   0,  15,  25,  50,  75,  75, 100, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500, 500}, // 4  75%
+        {400, 350, 300, 250, 200, 150, 100,  50,  25,   0,   0,   0,  20,  30,  60,  80,  90, 100, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450}, // 5  70%
+        {400, 350, 300, 250, 200, 150, 100,  65,  35,  10,   0,   0,   0,   0,   5,  25,  40,  75, 100, 150, 200, 250, 275, 300, 350, 400, 450, 475}, // 6  65%
+        {400, 350, 300, 250, 200, 150, 100,  75,  50,  15,   0,   0,   0,   0,   0,   0,  25,  50, 100, 125, 150, 175, 200, 350, 400, 450, 450, 450}, // 7  60%
+        {400, 350, 300, 250, 200, 150, 100,  60,  35,  25,   0,   0,   0,   0,   0,   0,  20,  35,  75, 100, 120, 135, 150, 225, 300, 325, 375, 425}, // 8  55%
+        {400, 350, 300, 250, 200, 150, 100,  75,  60,  50,  25,   0,   0,   0,   0,   0,  15,  25,  50,  70,  80,  90, 100, 150, 200, 250, 300, 400}, // 9  50%
+        {450, 400, 350, 325, 275, 225, 200, 175, 100,  80,  75,  50,  75,  75,  50,  25,  20,  35,  75, 100, 120, 135, 150, 185, 225, 265, 300, 400}, // 10 45%
+        {500, 450, 400, 375, 350, 325, 300, 250, 200, 175, 150, 100, 150, 125, 100,  50,  25,  50, 100, 125, 150, 175, 200, 225, 250, 275, 300, 400}, // 11 40%
+        {500, 460, 425, 400, 375, 350, 325, 275, 250, 225, 225, 200, 225, 200, 200, 175, 150, 175, 200, 175, 180, 230, 280, 340, 375, 400, 450, 500}, // 12 35%
+        {500, 475, 450, 425, 400, 375, 350, 325, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 325, 350, 375, 400, 425, 450, 475, 500}  // 13 30%
+      
       };
       
-      int humidity_index = 0;
-      if (humidity >= 90) humidity_index = 0;
-      else if (humidity >= 80) humidity_index = 1;
-      else if (humidity >= 70) humidity_index = 2;
-      else if (humidity >= 60) humidity_index = 3;
-      else if (humidity >= 50) humidity_index = 4;
-      else if (humidity >= 40) humidity_index = 5;
-      else if (humidity >= 30) humidity_index = 6;
-      else if (humidity >= 20) humidity_index = 7;
-      else humidity_index = 8;
-      
-      int temp_index = 0;
-      if (temperature >= 28) temp_index = 13;
-      else if (temperature >= 27) temp_index = 12;
-      else if (temperature >= 26) temp_index = 11;
-      else if (temperature >= 25) temp_index = 10;
-      else if (temperature >= 24) temp_index = 9;
-      else if (temperature >= 23) temp_index = 8;
-      else if (temperature >= 22) temp_index = 7;
-      else if (temperature >= 21) temp_index = 6;
-      else if (temperature >= 20) temp_index = 5;
-      else if (temperature >= 19) temp_index = 4;
-      else if (temperature >= 18) temp_index = 3;
-      else if (temperature >= 17) temp_index = 2;
-      else if (temperature >= 16) temp_index = 1;
-      else temp_index = 0;
-      
-      // Oprava: Zamedzenie prístupu mimo rozsah
-      if (temp_index >= 13) {
-        temp_index = 12;
-      }
-      
-      float ratio = temperature - (15 + temp_index);
-      
-      float interpolated_aqi = aqi_table[humidity_index][temp_index] +
-        ratio * (aqi_table[humidity_index][temp_index + 1] - aqi_table[humidity_index][temp_index]);
-      
-      return interpolated_aqi;
-        
+      // Výber hodnoty z tabuľky
+      uint16_t aqi = aqi_table[h_index][t_index];
+      return (float)aqi;
+
+
   # Final Air Quality Index
   - platform:            template
-    name:                "${friendly_name} AQI"
+    name:                "AQI"
     update_interval:      never
     unit_of_measurement:  AQI
     id:                   aqi_final
+    icon: mdi:gauge
     accuracy_decimals:    0
     lambda: |-
       //float aqi_voc = id(aqi_voc).state;
@@ -2137,10 +2257,10 @@ sensor:
  # Dimmer lights
  #-------------------------------------------
  # Media center
-  - platform: homeassistant
-    id: dimmermediacenter
+  - platform:   homeassistant
+    id:         dimmermediacenter
     entity_id: $light_mediacenter
-    attribute: brightness
+    attribute:  brightness
     filters:
       - lambda: |-
           if (std::isnan(x)) {
@@ -2218,7 +2338,7 @@ switch:
   # ANTI BURN DISPLEY
   #-------------------------------------------
   - platform: template
-    name: "${friendly_name} Antiburn"
+    name: "Antiburn"
     id: switch_antiburn
     #internal: true
     icon: mdi:television-shimmer
@@ -2245,7 +2365,7 @@ switch:
   # MICROPHONE MUTE
   #-------------------------------------------
   - platform:     template
-    name:        "${friendly_name} Microphone"
+    name:        "Microphone"
     id:           microphone_mute
     optimistic:   true
     restore_mode: ALWAYS_ON 
@@ -2292,7 +2412,7 @@ switch:
   # Brightness Auto
   #-------------------------------------------
   - platform:     template
-    name:        "${friendly_name} Brightness Auto"
+    name:        "Brightness Auto"
     id:           brightness_auto
     optimistic:   true
     restore_mode: ALWAYS_ON 
@@ -2337,18 +2457,18 @@ binary_sensor:
 # Online status
 #-------------------------------------------
   - platform: status
-    name: "${friendly_name} Status"
+    name: "Status"
     id: status_online
     entity_category: diagnostic
     icon: mdi:ethernet
-    on_state:
-      if:
-        condition:
-          binary_sensor.is_off: status_online
-        then:
-          - lvgl.widget.hide: lvgl_online_status
-        else:
-          - lvgl.widget.show: lvgl_online_status
+    #on_state:
+    #  if:
+    #    condition:
+    #      binary_sensor.is_off: status_online
+    #    then:
+    #      - lvgl.widget.hide: lvgl_online_status
+    #    else:
+    #      - lvgl.widget.show: lvgl_online_status
 
 #-------------------------------------------
 # CircuitBreaker
@@ -2357,7 +2477,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     circuitbedroom
     entity_id:              $circuit_bedroom
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2369,7 +2489,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     circuitkitchen
     entity_id:              $circuit_kitchen
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2381,7 +2501,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     circuitbathroom
     entity_id:              $circuit_bathroom
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2393,7 +2513,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     circuitlivingroom
     entity_id:              $circuit_livingroom
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2405,7 +2525,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     circuitexterior
     entity_id:              $circuit_exterior
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2417,7 +2537,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     circuitcellar
     entity_id:              $circuit_cellar
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2429,7 +2549,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     circuitatelier
     entity_id:              $circuit_atelier
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2446,7 +2566,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     mediacenter
     entity_id:              $switch_mediacenter
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2460,7 +2580,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     poolfilter
     entity_id:              $switch_poolfilter
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2474,7 +2594,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     watering
     entity_id:              $switch_watering
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2487,7 +2607,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     kotol
     entity_id:              $switch_kotol
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2500,7 +2620,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     boiler
     entity_id:              $switch_boiler
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2515,7 +2635,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     lightlivingroom
     entity_id:              $light_livingroom
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         - lvgl.widget.update:
@@ -2537,7 +2657,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     lightmediacenter
     entity_id:              $light_mediacenter
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         - lvgl.widget.update:
@@ -2558,7 +2678,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     lightkitchensink
     entity_id:              $light_kitchensink
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2572,7 +2692,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     lightbar
     entity_id:              $light_bar
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2584,7 +2704,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     lighthall
     entity_id:              $light_hall
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2596,7 +2716,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     lightbedroom
     entity_id:              $light_bedroom
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2608,7 +2728,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     lightpantry
     entity_id:              $light_pantry
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2620,7 +2740,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     lightpool
     entity_id:              $light_pool
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         # if:
@@ -2646,7 +2766,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     valve1
     entity_id:              $valve_1_temp
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         - lvgl.switch.update:
@@ -2659,7 +2779,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     valve2
     entity_id:              $valve_2_temp
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2671,7 +2791,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     valve3
     entity_id:              $valve_3_temp
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2683,7 +2803,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     valve4
     entity_id:              $valve_4_temp
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2695,7 +2815,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     valve5
     entity_id:              $valve_5_temp
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2707,7 +2827,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     valve6
     entity_id:              $valve_6_temp
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.widget.update:
@@ -2719,7 +2839,7 @@ binary_sensor:
   - platform:               homeassistant
     id:                     valveauto
     entity_id:              $valve_auto
-    publish_initial_state:  true
+    trigger_on_initial_state:  true
     on_state:
       then:
         lvgl.checkbox.update:
@@ -2732,8 +2852,8 @@ binary_sensor:
 #-------------------------------------------
 output:
   - platform: ledc
-    pin: $display_led_pin
-    id: backlight
+    pin:      $display_led_pin
+    id:        backlight
     frequency: 100Hz
 
 #-------------------------------------------
@@ -2741,10 +2861,11 @@ output:
 #-------------------------------------------
 light:
   - platform: monochromatic
-    output: backlight
-    name: Display Backlight
-    id: display_backlight
+    output:   backlight
+    name:     Display Backlight
+    id:       display_backlight
     restore_mode: ALWAYS_ON
+    default_transition_length: 1s
     on_turn_on:
       - if:
           condition:
@@ -2763,9 +2884,12 @@ text_sensor:
   #-------------------------------------------
   # VOICE ASSISTANT
   #-------------------------------------------
-  - id: text_request
-    platform: template
-    name: Text request
+  - id:              text_request
+    platform:        template
+    name:            Text Request
+    icon:            mdi:comment-text-multiple
+    update_interval: never
+    entity_category: diagnostic
     on_value:
       lambda: |-
         if(id(text_request).state.length()>32) {
@@ -2774,10 +2898,12 @@ text_sensor:
           id(text_request).state = (truncated+"...").c_str();
         }
 
-  - id: text_response
-    platform: template
-    name: Text response
-    internal: true
+  - id:              text_response
+    platform:        template
+    name:            Text response
+    internal:        true
+    update_interval: never
+    entity_category: diagnostic
     on_value:
       - lambda: |-
           if(id(text_response).state.length()>32) {
@@ -3434,18 +3560,19 @@ text_sensor:
                 id: lv_dropdown_vacuum_fan
                 selected_index: 3
 
-#-------------------------------------------
-# Template - cleaner room selected
-# number room is number name in settings vacuum no number on custom cleaning sequency
-#-------------------------------------------
+
+ #-------------------------------------------
+ # Template - cleaner room selected
+ # number room is number name in settings vacuum no number on custom cleaning sequency
+ #-------------------------------------------
   - platform: template
-    name: "${friendly_name} Clenaer room select"
+    name: "Clenaer room select"
     id: select_room
     lambda: |-
         
         std::string segment_str = "[";
         bool first = true;
-
+        
         //if (id(button1_hall).state      ) { if (!first) segment_str += ","; segment_str += "1"; first = false; }
         //if (id(button2_corridor).state  ) { if (!first) segment_str += ","; segment_str += "2"; first = false; }
         //if (id(button3_kitchen).state   ) { if (!first) segment_str += ","; segment_str += "3"; first = false; }
@@ -3462,7 +3589,7 @@ text_sensor:
         if (id(button6_bathroom).state  ) { if (!first) segment_str += ","; segment_str += "5"; first = false; }
         if (id(button7_kidsroom).state  ) { if (!first) segment_str += ","; segment_str += "2"; first = false; }
         if (id(button8_wc).state        ) { if (!first) segment_str += ","; segment_str += "10"; first = false; }
-
+        
         segment_str += "]";
         
         // Ak nie sú žiadne zapnuté prepínače, nastavíme prázdne pole
@@ -3658,9 +3785,9 @@ text_sensor:
         - lvgl.label.update:
             id: lvgl_rain_name
             text: !lambda |-
-              std::string x = id(weather_voice).state; // Výstup zo senzora
+              std::string state_value = id(weather_voice).state; // Výstup zo senzora
               
-              std::string snow = x.substr(46, 5); // Extrahovanie hodnoty snehu
+              std::string snow = state_value.substr(46, 5); // Extrahovanie hodnoty snehu
               snow.erase(0, snow.find_first_not_of(" ")); // Orezanie medzier
         
               float snow_value = std::stof(snow); // Prevod na float
@@ -3678,9 +3805,9 @@ text_sensor:
         - lvgl.label.update:
             id: lvgl_rain_mm
             text: !lambda |-
-              std::string x = id(weather_voice).state; // Výstup zo senzora
+              std::string state_value = id(weather_voice).state; // Výstup zo senzora
               
-              std::string snow = x.substr(46, 5); // Extrahovanie hodnoty oblačnosti
+              std::string snow = state_value.substr(46, 5); // Extrahovanie hodnoty oblačnosti
               snow.erase(0, snow.find_first_not_of(" ")); // Orezanie medzier
               
               if (std::stof(snow) == 0.0) {
@@ -3951,10 +4078,10 @@ text_sensor:
 #-------------------------------------------
 # Five days forecat wheater - import home assistant template sensor
 # Tabuľka údajov
-# x|WEDNESDAY|󰖐|  7~ 19   | 40- 57|  0.0/  0| THURSDAY|󰖗|  6~ 13   | 32- 50| 17.0/100|   FRIDAY|󰖗|  6~ 12   | 27- 50|  1.9/100| SATURDAY|󰖐|  7~  9   | 18- 38|  0.0/  0|
-# x|YYYYYYYYY|X|-99~-99   |999-999|999.9/999|YYYYYYYYY|X|-99~-99   |999-999|999.9/999|YYYYYYYYY|X|-99~-99   |999-999|999.9/999|YYYYYYYYY|X|-99~-99   |999-999|999.9/999|
-# 0|1        |10|11       |21     |25       |37       |46|47       |57     |64       |73       |82|83       |93     |100      |109      |118|119     |129    |136      |
-#  |9        |4|10        |7      |9        |10   
+# x|WEDNESDAY|󰖐|  7 ~ 19   | 40- 57|  0.0/  0| THURSDAY|󰖗|  6~ 13   | 32- 50| 17.0/100|   FRIDAY|󰖗|  6~ 12   | 27- 50|  1.9/100| SATURDAY|󰖐|  7~  9   | 18- 38|  0.0/  0|
+# x|YYYYYYYYY|X|-99 ~-99   |999-999|999.9/999|YYYYYYYYY|X|-99~-99   |999-999|999.9/999|YYYYYYYYY|X|-99~-99   |999-999|999.9/999|YYYYYYYYY|X|-99~-99   |999-999|999.9/999|
+# 0|1        |10|11        |22     |24       |37       |46|47       |57     |64       |73       |82|83       |93     |100      |109      |118|119     |129    |136      |
+#  |9        |4|10         |7      |9        |10   
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # 0|123456789|1|1111111112|2222222|223333333|333444444|4|4445555555|5556666|666666777|777777778|8|8888888999|9999999|111111111|111111111|1|1111111111|1111111|111111111|
 #            |0|1234567890|1234567|890123456|789012345|6|7890123456|7890123|456789012|345678901|2|3456789012|3456789|000000000|011111111|1|1222222222|2333333|333344444|
@@ -3962,6 +4089,8 @@ text_sensor:
 #x|WEDNESDAY|󰖗|  6~ 19| 40- 57|  0.1/ 20|
 #x|         |590|       |       |         |
 #xWEDNESDAY󰖐  5~ 19 40- 57  0.0/  0 THURSDAY󰖗  6~ 13 32- 50 17.0/100   FRIDAY󰖗  6~ 12 27- 50  1.9/100 SATURDAY󰖐  7~  9 18- 38  0.0/  0
+#x   SUNDAY󰖔  5~ 19 16- 30  0.0/  0   MONDAY󰖕  6~ 23 16- 21  0.0/  0  TUESDAY󰖔  8~ 21 11- 15  0.0/  0WEDNESDAY󰖐 11~ 22  9-  8  0.0/  0
+#x   SUNDAY󰖗  9~ 14 25- 43 11.3/100   MONDAY󰖐  9~ 16 29- 49  0.0/ 50  TUESDAY󰖕  8~ 21 11- 18  0.0/  0WEDNESDAY󰖗 10~ 17 15- 18  1.8/100
 #-------------------------------------------
   - platform:  homeassistant
     internal:  true
@@ -4102,6 +4231,7 @@ text_sensor:
 touchscreen:
   platform: gt911
   i2c_id: bus_a
+  setup_priority: 150.0
   #rotation: 180
   #transform:
   #  mirror_x: true
@@ -4145,7 +4275,7 @@ display:
     rotation: 180
     update_interval: never
     auto_clear_enabled: false
-    data_rate:   8MHz # 8MHz
+    data_rate:   2MHz # 8MHz
     spi_mode:    MODE3
     color_order: RGB
     #color_palette: 8bit
@@ -4235,13 +4365,25 @@ time:
         - lvgl.label.update:
               id: label_date
               text: !lambda |-
-                static const char * const day_names[] = {"Pondelok", "Utorok", "Streda", "Štvrtok", "Piatok", "Sobota", "Nedeľa"};
+                static const char * const day_names[] = {"Sobota", "Nedeľa", "Pondelok", "Utorok", "Streda", "Štvrtok", "Piatok"};
                 static char date_buf[21];
                 auto date = id(my_time).now();
-                //auto date = id(esptime).now();
-                if (date.is_valid())
-                  snprintf(date_buf, sizeof(date_buf), "%s %2d.%2d.%2d", day_names[date.day_of_week-2], date.day_of_month, date.month, date.year);
+                if (date.is_valid() && date.day_of_week >= 0 && date.day_of_week <= 6)
+                  snprintf(date_buf, sizeof(date_buf), "%s %2d.%2d.%2d", day_names[date.day_of_week], date.day_of_month, date.month, date.year);
                 return date_buf;
+
+        - lvgl.label.update:
+            id: label_time_hours
+            text:
+              format: "%02d"
+              args: ['id(my_time).now().hour']
+      
+        - lvgl.label.update:
+            id: label_time_minutes
+            text:
+              format: "%02d"
+              args: ['id(my_time).now().minute']
+                
     on_time:
     # Hours and minute
       - cron: '00 /1 * * * *' # Trigger every minute
@@ -4253,8 +4395,6 @@ time:
                 args: [ 'id(my_time).now().hour']
                 #args: [ 'id(esptime).now().hour']
 
-      - cron: '00 /1 * * * *' # Trigger every minute
-        then:
           - lvgl.label.update:
               id: label_time_minutes
               text:
@@ -4302,6 +4442,10 @@ time:
 # INTERVALS
 #-------------------------------------------
 interval:
+  - interval: 360s
+    #startup_delay: 5s
+    then:
+      - script.execute: script_wifi
   - interval: 1s  # Interval prepínania každú sekundu
     then:
       if: 
@@ -4341,7 +4485,7 @@ interval:
                   id: mapvacuum
                   src: img_vacuum_snap_on
 
-  - interval: 120s
+  - interval: 10min
     then:
       if:
         condition: 
@@ -4359,20 +4503,20 @@ interval:
 #------------------------------------------- 
 button:
   - platform: restart
-    name: "${friendly_name} Reset"
-  - platform: template
-    name: test micro
-    on_press:
-      then: 
-        - voice_assistant.stop:
-        - delay: 1s
-        - micro_wake_word.start:
-  - platform: template
-    name: test bootscreen
-    on_press:
-      - lvgl.label.update: 
-          id: label_news
-          long_mode: scroll_circular
+    name: "Reset"
+#  - platform: template
+#    name: test micro
+#    on_press:
+#      then: 
+#        - voice_assistant.stop:
+#        - delay: 1s
+#        - micro_wake_word.start:
+#  - platform: template
+#    name: test bootscreen
+#    on_press:
+#      - lvgl.label.update: 
+#          id: label_news
+#          long_mode: scroll_circular
 
 #-------------------------------------------
 # NUMBERS
